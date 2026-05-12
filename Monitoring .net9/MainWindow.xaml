@@ -35,7 +35,7 @@
             </StackPanel>
 
             <TextBlock Text="CPU / RAM"
-                       FontSize="36"
+                       FontSize="30"
                        FontWeight="Bold"
                        Foreground="White"
                        Margin="0,0,0,30"/>
@@ -82,7 +82,7 @@
         <StackPanel Grid.Column="2">
 
             <TextBlock Text="GPU"
-                       FontSize="36"
+                       FontSize="30"
                        FontWeight="Bold"
                        Foreground="White"
                        Margin="0,0,0,30"/>
