@@ -12,7 +12,6 @@
   <ItemGroup>
     <PackageReference Include="HWHash" Version="1.5.0" />
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
-    <PackageReference Include="LiveCharts" Version="0.9.7" />
     <PackageReference Include="LiveChartsCore" Version="2.0.2" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.2" />
   </ItemGroup>
