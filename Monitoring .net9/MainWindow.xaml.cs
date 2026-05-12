@@ -2,8 +2,9 @@
 using System;
 using System.Windows;
 using System.Windows.Threading;
+using System.Windows.Input;
 
-namespace Monitoring
+namespace Monitoring_net9
 {
     public partial class MainWindow : Window
     {
@@ -22,24 +23,34 @@ namespace Monitoring
             timer.Start();
         }
 
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                Application.Current.Shutdown();
+            }
+
+            base.OnKeyDown(e);
+        }
+
         private void Timer_Tick(object? sender, EventArgs e)
         {
             monitorService.Update();
 
             CpuUsageText.Text =
-                $"CPU Usage : {monitorService.CpuUsage:F1} %";
+                $"{monitorService.CpuUsage:F1} %";
 
             RamUsageText.Text =
-                $"RAM Used : {monitorService.RamUsed:F1} GB";
+                $"{monitorService.RamUsed:F1} GB";
 
             GpuUsageText.Text =
-                $"GPU Usage : {monitorService.GpuUsage:F1} %";
+                $"{monitorService.GpuUsage:F1} %";
 
             GpuTempText.Text =
-                $"GPU Temp : {monitorService.GpuTemp:F1} °C";
+                $"{monitorService.GpuTemp:F1} °C";
 
             GpuMemoryText.Text =
-                $"GPU VRAM : {monitorService.GpuMemoryUsedGB:F1} GB";
+                $"{monitorService.GpuMemoryUsedGB:F1} GB";
         }
     }
 }
