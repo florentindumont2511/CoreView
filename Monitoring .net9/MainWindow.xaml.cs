@@ -84,10 +84,12 @@ namespace Monitoring_net9
 
             string result = "";
 
+
             foreach (var reading in monitoringManager.Readings)
             {
-                if (reading.LabelOrig.Contains("Tctl") ||
-                    reading.LabelOrig.Contains("Tdie"))
+                if (reading.LabelOrig.Contains(
+                    "GPU",
+                    StringComparison.OrdinalIgnoreCase))
                 {
                     result +=
                         $"{reading.LabelOrig} = {reading.Value} {reading.Unit}\n";
@@ -151,6 +153,12 @@ namespace Monitoring_net9
             CpuTempText.Text =
                 $"{monitoringManager.Data.CpuTemperature:F1} °C";
 
+            CpuClockText.Text =
+                $"{monitoringManager.Data.CpuClock:F0} MHz";
+
+            CpuPowerText.Text =
+                $"{monitoringManager.Data.CpuPower:F1} W";
+
             RamUsageText.Text =
                 $"{monitoringManager.Data.RamUsed:F1} GB";
 
@@ -169,6 +177,16 @@ namespace Monitoring_net9
 
             GpuMemoryText.Text =
                 $"{monitoringManager.Data.GpuMemoryUsedGB:F1} GB";
+
+            GpuClockText.Text =
+                $"{monitoringManager.Data.GpuClock:F0} MHz";
+
+            GpuHotspotText.Text =
+                $"{monitoringManager.Data.GpuHotspot:F1} °C";
+
+            GpuMemoryJunctionText.Text =
+                $"{monitoringManager.Data.GpuMemoryJunction:F1} °C";
+
         }
 
         private void HwInfoRestartTimer_Tick(

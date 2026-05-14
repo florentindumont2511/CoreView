@@ -14,7 +14,7 @@ namespace Monitoring_net9.Services
 
         private readonly HwInfoService hwInfoService;
 
-        public List<HwInfoReadingElement> Readings => hwInfoService.Readings;
+        public List<HwInfoReadingElement> Readings =>hwInfoService.Readings;
 
         public SensorData Data { get; private set; } =
             new SensorData();
@@ -49,6 +49,8 @@ namespace Monitoring_net9.Services
 
             hwInfoService.UpdateCpuTemperature();
 
+            hwInfoService.UpdateAdvancedSensors();
+
             // Fusion des données
             Data.CpuUsage =
                 hardwareMonitorService.Data.CpuUsage;
@@ -68,6 +70,21 @@ namespace Monitoring_net9.Services
             // Température CPU HWiNFO
             Data.CpuTemperature =
                 hwInfoService.Data.CpuTemperature;
+
+            Data.CpuClock =
+                hwInfoService.Data.CpuClock;
+
+            Data.CpuPower =
+                hwInfoService.Data.CpuPower;
+
+            Data.GpuClock =
+                hwInfoService.Data.GpuClock;
+
+            Data.GpuHotspot =
+                hwInfoService.Data.GpuHotspot;
+
+            Data.GpuMemoryJunction =
+                hwInfoService.Data.GpuMemoryJunction;
         }
 
 

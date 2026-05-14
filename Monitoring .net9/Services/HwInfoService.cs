@@ -112,5 +112,47 @@ namespace Monitoring_net9.Services
                 Data.CpuTemperature = cpuTempReading.Value;
             }
         }
+
+        public void UpdateAdvancedSensors()
+        {
+            foreach (var reading in Readings)
+            {
+                // CPU CLOCK
+                if (reading.LabelOrig.Contains(
+                    "Core 0 Clock (perf #1)"))
+                {
+                    Data.CpuClock = reading.Value;
+                }
+
+                // CPU POWER
+                if (reading.LabelOrig.Contains(
+                    "CPU Package Power"))
+                {
+                    Data.CpuPower = reading.Value;
+                }
+
+                // GPU CLOCK
+                if (reading.LabelOrig.Contains(
+                    "GPU Clock"))
+                {
+                    Data.GpuClock = reading.Value;
+                }
+
+                // GPU HOTSPOT
+                if (reading.LabelOrig.Contains(
+                    "GPU Hot Spot"))
+                {
+                    Data.GpuHotspot = reading.Value;
+                }
+
+                // GPU MEMORY JUNCTION
+                if (reading.LabelOrig.Contains(
+                    "GPU Memory Junction"))
+                {
+                    Data.GpuMemoryJunction = reading.Value;
+                }
+
+            }
+        }
     }
 }
