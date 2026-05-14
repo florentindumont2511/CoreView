@@ -132,6 +132,7 @@ namespace Monitoring_net9
             // TIMER RESTART HWiNFO
             hwInfoRestartTimer = new DispatcherTimer();
 
+
             hwInfoRestartTimer.Interval = TimeSpan.FromHours(11);
 
             hwInfoRestartTimer.Tick += HwInfoRestartTimer_Tick;
