@@ -11,6 +11,8 @@ namespace Monitoring_net9.Services
 
         public HwInfoSharedMemHeader Header { get; private set; }
 
+        public SensorData Data { get; private set; } =  new SensorData();
+
         public List<HwInfoReadingElement> Readings { get; private set; } = [];
 
         public double CpuTemperature { get; private set; }
@@ -107,7 +109,7 @@ namespace Monitoring_net9.Services
 
             if (!string.IsNullOrEmpty(cpuTempReading.LabelOrig))
             {
-                CpuTemperature = cpuTempReading.Value;
+                Data.CpuTemperature = cpuTempReading.Value;
             }
         }
     }

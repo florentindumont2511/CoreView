@@ -165,21 +165,21 @@ namespace Monitoring_net9
             monitorService.Update();
 
             CpuUsageText.Text =
-                $"{monitorService.CpuUsage:F1} %";
+                $"{monitorService.Data.CpuUsage:F1} %";
 
             CpuTempText.Text =
-                $"{hwInfoService.CpuTemperature:F1} °C";
+                $"{hwInfoService.Data.CpuTemperature:F1} °C";
 
             RamUsageText.Text =
-                $"{monitorService.RamUsed:F1} GB";
+                $"{monitorService.Data.RamUsed:F1} GB";
 
             GpuUsageText.Text =
-                $"{monitorService.GpuUsage:F1} %";
+                $"{monitorService.Data.GpuUsage:F1} %";
 
             GpuTempText.Text =
-                $"{monitorService.GpuTemp:F1} °C";
+                $"{monitorService.Data.GpuTemperature:F1} °C";
 
-            gpuTempValues.Add(monitorService.GpuTemp);
+            gpuTempValues.Add(monitorService.Data.GpuTemperature);
 
             if (gpuTempValues.Count > 60)
             {

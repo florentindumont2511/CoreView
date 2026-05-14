@@ -1,4 +1,5 @@
 ﻿using LibreHardwareMonitor.Hardware;
+using Monitoring_net9.Models;
 
 namespace Monitoring.Services
 {
@@ -6,11 +7,9 @@ namespace Monitoring.Services
     {
         private readonly Computer computer;
 
-        public float CpuUsage { get; private set; }
-        public float RamUsed { get; private set; }
-        public float GpuUsage { get; private set; }
-        public float GpuTemp { get; private set; }
         public float GpuMemoryUsed { get; private set; }
+
+        public SensorData Data { get; private set; } = new SensorData();
 
         public float GpuMemoryUsedGB =>
             GpuMemoryUsed / 1024f;
@@ -53,7 +52,8 @@ namespace Monitoring.Services
                     if (sensor.SensorType == SensorType.Load &&
                         sensor.Name == "CPU Total")
                     {
-                        CpuUsage = sensor.Value ?? 0;
+                        // CpuUsage = sensor.Value ?? 0;
+                        Data.CpuUsage = sensor.Value ?? 0;
                     }
                 }
             }
@@ -67,7 +67,7 @@ namespace Monitoring.Services
                          sensor.SensorType == SensorType.SmallData) &&
                         sensor.Name.Contains("Memory Used"))
                     {
-                        RamUsed = sensor.Value ?? 0;
+                        Data.RamUsed = sensor.Value ?? 0;
                     }
                 }
             }
@@ -82,13 +82,13 @@ namespace Monitoring.Services
                     if (sensor.SensorType == SensorType.Load &&
                         sensor.Name == "GPU Core")
                     {
-                        GpuUsage = sensor.Value ?? 0;
+                        Data.GpuUsage = sensor.Value ?? 0;
                     }
 
                     // Température GPU
                     if (sensor.SensorType == SensorType.Temperature)
                     {
-                        GpuTemp = sensor.Value ?? 0;
+                        Data.GpuTemperature = sensor.Value ?? 0;
                     }
 
                     // VRAM
