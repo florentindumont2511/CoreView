@@ -58,6 +58,23 @@
                 </StackPanel>
             </Border>
 
+            <Border Background="#252525"
+                    CornerRadius="20"
+                    Padding="20"
+                    Margin="0,0,0,20">
+
+                <StackPanel>
+                    <TextBlock Text="CPU Temperature"
+                               FontSize="22"
+                               Foreground="#AAAAAA"/>
+
+                    <TextBlock x:Name="CpuTempText"
+                               FontSize="48"
+                               FontWeight="Bold"
+                               Foreground="White"/>
+                </StackPanel>
+            </Border>
+
             <!-- RAM -->
             <Border Background="#252525"
                     CornerRadius="20"
