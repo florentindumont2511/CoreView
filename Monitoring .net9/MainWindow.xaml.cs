@@ -16,13 +16,12 @@ namespace Monitoring_net9
 {
     public partial class MainWindow : Window
     {
-        private readonly HardwareMonitorService monitorService;
+        private readonly MonitoringManager monitoringManager;
+
         private readonly DispatcherTimer timer;
         public ISeries[] GpuTempSeries { get; set; }
 
         private ObservableCollection<double> gpuTempValues = new();
-
-        private readonly HwInfoService hwInfoService;
 
         private readonly DispatcherTimer hwInfoRestartTimer;
 
@@ -66,52 +65,36 @@ namespace Monitoring_net9
 
             Thread.Sleep(5000);
 
-            hwInfoService.Connect();
-
-            hwInfoService.ReadHeader();
+            monitoringManager.Initialize();
         }
 
         public MainWindow()
         {
             InitializeComponent();
 
-            monitorService = new HardwareMonitorService();
 
-            hwInfoService = new HwInfoService();
+            monitoringManager = new MonitoringManager();
+
+            monitoringManager.Initialize();
 
             StartHwInfo();
 
             Thread.Sleep(5000);
 
-            bool connected = hwInfoService.Connect();
 
-            bool headerRead = hwInfoService.ReadHeader();
+            string result = "";
 
-            bool readingsRead = hwInfoService.ReadReadings();
-
-            if (connected && headerRead && readingsRead)
+            foreach (var reading in monitoringManager.Readings)
             {
-                string result = "";
-
-                foreach (var reading in hwInfoService.Readings)
+                if (reading.LabelOrig.Contains("Tctl") ||
+                    reading.LabelOrig.Contains("Tdie"))
                 {
-                    /*
                     result +=
-                        $"{reading.LabelOrig} = {reading.Value} {reading.Unit}\n";*/
-                    if (reading.LabelOrig.Contains("Tctl") ||
-                        reading.LabelOrig.Contains("Tdie"))
-                        {
-                            result +=
-                            $"{reading.LabelOrig} = {reading.Value} {reading.Unit}\n";
-                        }
+                        $"{reading.LabelOrig} = {reading.Value} {reading.Unit}\n";
                 }
+            }
 
-                MessageBox.Show(result);
-            }
-            else
-            {
-                MessageBox.Show("Erreur lecture HWiNFO");
-            }
+            MessageBox.Show(result);
 
             GpuTempSeries =
             [
@@ -159,27 +142,25 @@ namespace Monitoring_net9
                 "dddd dd MMMM yyyy",
                 new CultureInfo("fr-FR"));
 
-            hwInfoService.ReadReadings();
-            hwInfoService.UpdateCpuTemperature();
 
-            monitorService.Update();
+            monitoringManager.Update();
 
             CpuUsageText.Text =
-                $"{monitorService.Data.CpuUsage:F1} %";
+                $"{monitoringManager.Data.CpuUsage:F1} %";
 
             CpuTempText.Text =
-                $"{hwInfoService.Data.CpuTemperature:F1} °C";
+                $"{monitoringManager.Data.CpuTemperature:F1} °C";
 
             RamUsageText.Text =
-                $"{monitorService.Data.RamUsed:F1} GB";
+                $"{monitoringManager.Data.RamUsed:F1} GB";
 
             GpuUsageText.Text =
-                $"{monitorService.Data.GpuUsage:F1} %";
+                $"{monitoringManager.Data.GpuUsage:F1} %";
 
             GpuTempText.Text =
-                $"{monitorService.Data.GpuTemperature:F1} °C";
+                $"{monitoringManager.Data.GpuTemperature:F1} °C";
 
-            gpuTempValues.Add(monitorService.Data.GpuTemperature);
+            gpuTempValues.Add(monitoringManager.Data.GpuTemperature);
 
             if (gpuTempValues.Count > 60)
             {
@@ -187,7 +168,7 @@ namespace Monitoring_net9
             }
 
             GpuMemoryText.Text =
-                $"{monitorService.GpuMemoryUsedGB:F1} GB";
+                $"{monitoringManager.Data.GpuMemoryUsedGB:F1} GB";
         }
 
         private void HwInfoRestartTimer_Tick(

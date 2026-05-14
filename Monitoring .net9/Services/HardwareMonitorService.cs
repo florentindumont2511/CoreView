@@ -7,12 +7,8 @@ namespace Monitoring.Services
     {
         private readonly Computer computer;
 
-        public float GpuMemoryUsed { get; private set; }
-
         public SensorData Data { get; private set; } = new SensorData();
 
-        public float GpuMemoryUsedGB =>
-            GpuMemoryUsed / 1024f;
 
         public HardwareMonitorService()
         {
@@ -52,7 +48,6 @@ namespace Monitoring.Services
                     if (sensor.SensorType == SensorType.Load &&
                         sensor.Name == "CPU Total")
                     {
-                        // CpuUsage = sensor.Value ?? 0;
                         Data.CpuUsage = sensor.Value ?? 0;
                     }
                 }
@@ -96,7 +91,7 @@ namespace Monitoring.Services
                          sensor.SensorType == SensorType.Data) &&
                         sensor.Name.Contains("GPU Memory Used"))
                     {
-                        GpuMemoryUsed = sensor.Value ?? 0;
+                        Data.GpuMemoryUsedGB = (sensor.Value ?? 0) / 1024f;
                     }
                 }
             }

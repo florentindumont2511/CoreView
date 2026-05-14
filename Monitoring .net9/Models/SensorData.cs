@@ -16,5 +16,6 @@
         public double GpuTemperature { get; set; }
 
         public double GpuMemoryUsedGB { get; set; }
+
     }
 }
