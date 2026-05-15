@@ -4,13 +4,15 @@ using Monitoring.Services;
 using Monitoring_net9.Services;
 using System;
 using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Threading;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Threading;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
+
 
 namespace Monitoring_net9
 {
@@ -71,6 +73,7 @@ namespace Monitoring_net9
         public MainWindow()
         {
             InitializeComponent();
+
 
 
             monitoringManager = new MonitoringManager();
@@ -150,11 +153,25 @@ namespace Monitoring_net9
             CpuUsageText.Text =
                 $"{monitoringManager.Data.CpuUsage:F1} %";
 
+
             CpuTempText.Text =
                 $"{monitoringManager.Data.CpuTemperature:F1} °C";
+            
+            if (monitoringManager.Data.CpuTemperature > 90)
+            {
+                CpuTempText.Foreground = Brushes.Red;
+            }
+            else if (monitoringManager.Data.CpuTemperature > 70)
+            {
+                CpuTempText.Foreground = Brushes.Orange;
+            }
+            else
+            {
+                CpuTempText.Foreground = Brushes.White;
+            }
 
             CpuClockText.Text =
-                $"{monitoringManager.Data.CpuClock:F0} MHz";
+                $"{monitoringManager.Data.CpuClock / 1000:F2} GHz";
 
             CpuPowerText.Text =
                 $"{monitoringManager.Data.CpuPower:F1} W";
@@ -173,6 +190,19 @@ namespace Monitoring_net9
             if (gpuTempValues.Count > 60)
             {
                 gpuTempValues.RemoveAt(0);
+            }
+
+            if (monitoringManager.Data.GpuTemperature > 95)
+            {
+                GpuTempText.Foreground = Brushes.Red;
+            }
+            else if (monitoringManager.Data.GpuTemperature > 80)
+            {
+                GpuTempText.Foreground = Brushes.Orange;
+            }
+            else
+            {
+                GpuTempText.Foreground = Brushes.White;
             }
 
             GpuMemoryText.Text =
