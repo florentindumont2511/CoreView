@@ -12,6 +12,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Windows.Interop;
+using System.Drawing;
 
 
 
@@ -28,6 +30,8 @@ namespace Monitoring_net9
 
         private readonly DispatcherTimer hwInfoRestartTimer;
 
+
+        /*
         private void MoveToMonitoringScreen()
         {
             var screens =
@@ -35,7 +39,14 @@ namespace Monitoring_net9
 
             if (screens.Length < 3)
                 return;
-
+        /*
+        //--------------------------------------------------------- à retirer après
+            foreach (var screen in screens)
+            {
+                LoggerService.Log(
+                    $"{screen.DeviceName} | {screen.Bounds}");
+            }
+        // --------------------------------------------------------
             var targetScreen = screens[2];
 
             WindowState = WindowState.Normal;
@@ -53,24 +64,62 @@ namespace Monitoring_net9
             ResizeMode = ResizeMode.NoResize;
 
             WindowState = WindowState.Maximized;
+        }*/
+
+        private void MoveToMonitoringScreen()
+        {
+            var screens = System.Windows.Forms.Screen.AllScreens;
+
+            var targetScreen =
+                screens.FirstOrDefault(
+                    s => s.DeviceName.Contains("DISPLAY3"));
+
+            if (targetScreen == null)
+                return;
+
+            WindowState = WindowState.Normal;
+
+            var source = PresentationSource.FromVisual(this);
+
+            double dpiX = 1.0;
+            double dpiY = 1.0;
+
+            if (source?.CompositionTarget != null)
+            {
+                dpiX = source.CompositionTarget.TransformFromDevice.M11;
+                dpiY = source.CompositionTarget.TransformFromDevice.M22;
+            }
+
+            Left = targetScreen.Bounds.Left * dpiX;
+            Top = targetScreen.Bounds.Top * dpiY + 1;
+
+            Width = targetScreen.Bounds.Width * dpiX;
+            Height = targetScreen.Bounds.Height * dpiY;
+
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            Topmost = true;
+
+            Activate();
         }
 
         private void MainWindow_Loaded(
-    object sender,
-    RoutedEventArgs e)
-        {
-            MoveToMonitoringScreen();
-        }
+            object sender,
+            RoutedEventArgs e)
+                {
+                    MoveToMonitoringScreen();
+                }
 
         private void MainWindow_ContentRendered(
-    object? sender,
-    EventArgs e)
-        {
-            MoveToMonitoringScreen();
-        }
+            object? sender,
+            EventArgs e)
+                {
+                    MoveToMonitoringScreen();
+                }
 
         public MainWindow()
         {
+            Loaded += (_, _) => MoveToMonitoringScreen();
             Topmost = true;
             InitializeComponent();
 

@@ -8,12 +8,12 @@
         WindowState="Normal"
         Background="#151515">
 
-    <Grid Margin="20">
+    <Grid Margin="30">
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1.3*" />
-            <ColumnDefinition Width="20" />
-            <ColumnDefinition Width="1.2*" />
+            <ColumnDefinition Width="1.4*" />
+            <ColumnDefinition Width="40" />
+            <ColumnDefinition Width="1.4*" />
         </Grid.ColumnDefinitions>
 
 
@@ -35,25 +35,25 @@
                 <RowDefinition Height="Auto"/>
 
                 <!-- ESPACE -->
-                <RowDefinition Height="10"/>
+                <RowDefinition Height="50"/>
 
                 <!-- TITRE -->
                 <RowDefinition Height="Auto"/>
 
                 <!-- ESPACE -->
-                <RowDefinition Height="10"/>
+                <RowDefinition Height="50"/>
 
                 <!-- LIGNE 1 -->
                 <RowDefinition Height="Auto"/>
 
                 <!-- ESPACE -->
-                <RowDefinition Height="5"/>
+                <RowDefinition Height="30"/>
 
                 <!-- LIGNE 2 -->
                 <RowDefinition Height="Auto"/>
 
                 <!-- ESPACE -->
-                <RowDefinition Height="5"/>
+                <RowDefinition Height="30"/>
 
                 <!-- LIGNE 3 -->
                 <RowDefinition Height="Auto"/>
@@ -64,7 +64,7 @@
             <TextBlock Grid.Row="0"
                Grid.ColumnSpan="3"
                x:Name="TimeText"
-               FontSize="40"
+               FontSize="70"
                FontWeight="Bold"
                Foreground="White"/>
 
@@ -72,14 +72,14 @@
             <TextBlock Grid.Row="1"
                Grid.ColumnSpan="3"
                x:Name="DateText"
-               FontSize="30"
+               FontSize="50"
                Foreground="#AAAAAA"/>
 
             <!-- TITRE -->
             <TextBlock Grid.Row="3"
                Grid.ColumnSpan="3"
                Text="CPU / RAM"
-               FontSize="30"
+               FontSize="50"
                FontWeight="Bold"
                Foreground="White"/>
 
@@ -92,11 +92,11 @@
 
                 <StackPanel>
                     <TextBlock Text="CPU Usage"
-                       FontSize="26"
+                       FontSize="50"
                        Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="CpuUsageText"
-                       FontSize="50"
+                       FontSize="90"
                        FontWeight="Bold"
                        Foreground="White"/>
                 </StackPanel>
@@ -111,11 +111,11 @@
 
                 <StackPanel>
                     <TextBlock Text="CPU Temp"
-                       FontSize="26"
+                       FontSize="50"
                        Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="CpuTempText"
-                               FontSize="50"
+                               FontSize="90"
                                FontWeight="Bold"
                                Foreground="Red"/>
                 </StackPanel>
@@ -130,11 +130,11 @@
 
                 <StackPanel>
                     <TextBlock Text="RAM"
-                       FontSize="26"
+                       FontSize="50"
                        Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="RamUsageText"
-                       FontSize="50"
+                       FontSize="90"
                        FontWeight="Bold"
                        Foreground="White"/>
                 </StackPanel>
@@ -149,11 +149,11 @@
 
                 <StackPanel>
                     <TextBlock Text="CPU Clock"
-                       FontSize="26"
+                       FontSize="50"
                        Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="CpuClockText"
-                       FontSize="50"
+                       FontSize="90"
                        FontWeight="Bold"
                        Foreground="White"/>
                 </StackPanel>
@@ -168,11 +168,11 @@
 
                 <StackPanel>
                     <TextBlock Text="CPU Power"
-                       FontSize="26"
+                       FontSize="50"
                        Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="CpuPowerText"
-                       FontSize="50"
+                       FontSize="90"
                        FontWeight="Bold"
                        Foreground="White"/>
                 </StackPanel>
@@ -226,7 +226,7 @@
             <TextBlock Grid.Row="0"
                        Grid.ColumnSpan="3"
                        Text="GPU"
-                       FontSize="30"
+                       FontSize="50"
                        FontWeight="Bold"
                        Foreground="White"
                        Margin="0,0,0,10"/>
@@ -240,11 +240,11 @@
 
                 <StackPanel>
                     <TextBlock Text="GPU Usage"
-                       FontSize="26"
+                       FontSize="50"
                        Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuUsageText"
-                       FontSize="50"
+                       FontSize="90"
                        FontWeight="Bold"
                        Foreground="White"/>
                 </StackPanel>
@@ -259,11 +259,11 @@
 
                 <StackPanel>
                     <TextBlock Text="GPU Temp"
-                               FontSize="26"
+                               FontSize="50"
                                Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuTempText"
-                               FontSize="50"
+                               FontSize="90"
                                FontWeight="Bold"
                                Foreground="White"/>
                 </StackPanel>
@@ -278,11 +278,11 @@
 
                 <StackPanel>
                     <TextBlock Text="GPU Clock"
-                               FontSize="26"
+                               FontSize="50"
                                Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuClockText"
-                               FontSize="42"
+                               FontSize="82"
                                FontWeight="Bold"
                                Foreground="White"/>
                 </StackPanel>
@@ -297,11 +297,11 @@
 
                 <StackPanel>
                     <TextBlock Text="VRAM"
-                       FontSize="26"
+                       FontSize="50"
                        Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuMemoryText"
-                       FontSize="50"
+                       FontSize="90"
                        FontWeight="Bold"
                        Foreground="White"/>
                 </StackPanel>
@@ -314,11 +314,11 @@
 
                 <StackPanel>
                     <TextBlock Text="GPU Hotspot"
-                               FontSize="26"
+                               FontSize="50"
                                Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuHotspotText"
-                               FontSize="50"
+                               FontSize="90"
                                FontWeight="Bold"
                                Foreground="White"/>
                 </StackPanel>
@@ -333,11 +333,11 @@
 
                 <StackPanel>
                     <TextBlock Text="Memory Junction"
-                               FontSize="26"
+                               FontSize="50"
                                Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuMemoryJunctionText"
-                               FontSize="50"
+                               FontSize="90"
                                FontWeight="Bold"
                                Foreground="White"/>
                 </StackPanel>
@@ -352,11 +352,11 @@
 
                 <StackPanel>
                     <TextBlock Text="GPU Power"
-                               FontSize="26"
+                               FontSize="50"
                                Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuPowerText"
-                               FontSize="50"
+                               FontSize="90"
                                FontWeight="Bold"
                                Foreground="White"/>
                 </StackPanel>
