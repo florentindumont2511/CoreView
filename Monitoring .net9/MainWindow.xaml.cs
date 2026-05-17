@@ -91,7 +91,7 @@ namespace Monitoring_net9
             }
 
             Left = targetScreen.Bounds.Left * dpiX;
-            Top = targetScreen.Bounds.Top * dpiY + 1;
+            Top = targetScreen.Bounds.Top * dpiY;
 
             Width = targetScreen.Bounds.Width * dpiX;
             Height = targetScreen.Bounds.Height * dpiY;
