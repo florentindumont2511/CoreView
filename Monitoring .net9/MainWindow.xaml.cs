@@ -30,42 +30,6 @@ namespace Monitoring_net9
 
         private readonly DispatcherTimer hwInfoRestartTimer;
 
-
-        /*
-        private void MoveToMonitoringScreen()
-        {
-            var screens =
-                System.Windows.Forms.Screen.AllScreens;
-
-            if (screens.Length < 3)
-                return;
-        /*
-        //--------------------------------------------------------- à retirer après
-            foreach (var screen in screens)
-            {
-                LoggerService.Log(
-                    $"{screen.DeviceName} | {screen.Bounds}");
-            }
-        // --------------------------------------------------------
-            var targetScreen = screens[2];
-
-            WindowState = WindowState.Normal;
-
-            Left = targetScreen.WorkingArea.Left;
-
-            Top = targetScreen.WorkingArea.Top;
-
-            Width = targetScreen.WorkingArea.Width;
-
-            Height = targetScreen.WorkingArea.Height;
-
-            WindowStyle = WindowStyle.None;
-
-            ResizeMode = ResizeMode.NoResize;
-
-            WindowState = WindowState.Maximized;
-        }*/
-
         private void MoveToMonitoringScreen()
         {
             var screens = System.Windows.Forms.Screen.AllScreens;

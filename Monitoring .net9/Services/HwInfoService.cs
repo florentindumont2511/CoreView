@@ -205,7 +205,7 @@ namespace Monitoring_net9.Services
 
                 // GPU CLOCK
                 if (reading.LabelOrig.Contains(
-                    "GPU Clock") && reading.Value > 0)
+                    "GPU Clock (Effective)") && reading.Value > 0)
                 {
                     Data.GpuClock = reading.Value;
                 }
