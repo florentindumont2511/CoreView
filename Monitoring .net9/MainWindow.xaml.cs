@@ -36,7 +36,7 @@ namespace Monitoring_net9
             if (screens.Length < 3)
                 return;
 
-            var targetScreen = screens[1];
+            var targetScreen = screens[2];
 
             WindowState = WindowState.Normal;
 
