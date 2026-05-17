@@ -215,6 +215,12 @@
                 <!-- LIGNE 3 -->
                 <RowDefinition Height="Auto"/>
 
+                <!-- ESPACE -->
+                <RowDefinition Height="5"/>
+
+                <!-- LIGNE 3 -->
+                <RowDefinition Height="Auto"/>
+
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0"
@@ -331,6 +337,25 @@
                                Foreground="#AAAAAA"/>
 
                     <TextBlock x:Name="GpuMemoryJunctionText"
+                               FontSize="50"
+                               FontWeight="Bold"
+                               Foreground="White"/>
+                </StackPanel>
+            </Border>
+
+            <!-- GPU Memory Junction -->
+            <Border Grid.Row="8"
+                Grid.Column="0"
+                Background="#252525"
+                CornerRadius="20"
+                Padding="5">
+
+                <StackPanel>
+                    <TextBlock Text="GPU Power"
+                               FontSize="26"
+                               Foreground="#AAAAAA"/>
+
+                    <TextBlock x:Name="GpuPowerText"
                                FontSize="50"
                                FontWeight="Bold"
                                Foreground="White"/>

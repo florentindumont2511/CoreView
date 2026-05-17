@@ -27,5 +27,6 @@
 
         public double GpuMemoryJunction { get; set; }
 
+        public double GpuPower { get; set; }
     }
 }

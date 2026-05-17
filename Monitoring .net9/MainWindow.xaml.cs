@@ -36,7 +36,7 @@ namespace Monitoring_net9
             if (screens.Length < 3)
                 return;
 
-            var targetScreen = screens[2];
+            var targetScreen = screens[1];
 
             WindowState = WindowState.Normal;
 
@@ -89,7 +89,8 @@ namespace Monitoring_net9
 
             Thread.Sleep(5000);
 
-            /*   Sert à afficher les sondes de HwInfo 64 pour les noms exactes
+            /*
+            //Sert à afficher les sondes de HwInfo 64 pour les noms exactes
             string result = "";
 
 
@@ -104,7 +105,7 @@ namespace Monitoring_net9
                 }
             }
 
-            MessageBox.Show(result);*/
+            System.Windows.MessageBox.Show(result);*/
 
             GpuTempSeries =
             [
@@ -213,12 +214,6 @@ namespace Monitoring_net9
             GpuTempText.Text =
                 $"{monitoringManager.Data.GpuTemperature:F1} °C";
 
-            gpuTempValues.Add(monitoringManager.Data.GpuTemperature);
-
-            if (gpuTempValues.Count > 60)
-            {
-                gpuTempValues.RemoveAt(0);
-            }
 
             if (monitoringManager.Data.GpuTemperature > 95)
             {
@@ -245,6 +240,8 @@ namespace Monitoring_net9
             GpuMemoryJunctionText.Text =
                 $"{monitoringManager.Data.GpuMemoryJunction:F1} °C";
 
+            GpuPowerText.Text =
+                $"{monitoringManager.Data.GpuPower:F1} W";
         }
     }
 }

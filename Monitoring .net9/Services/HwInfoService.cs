@@ -203,6 +203,13 @@ namespace Monitoring_net9.Services
                     Data.GpuClock = reading.Value;
                 }
 
+                // GPU Temp
+                if (reading.LabelOrig.Contains(
+                    "GPU Temperature") && reading.Value > 0)
+                {
+                    Data.GpuTemperature = reading.Value;
+                }
+
                 // GPU HOTSPOT
                 if (reading.LabelOrig.Contains(
                     "GPU Hot Spot") && reading.Value > 0)
@@ -215,6 +222,13 @@ namespace Monitoring_net9.Services
                     "GPU Memory Junction") && reading.Value > 0)
                 {
                     Data.GpuMemoryJunction = reading.Value;
+                }
+
+                // GPU MEMORY JUNCTION
+                if (reading.LabelOrig.Contains(
+                    "GPU Power Maximum") && reading.Value > 0)
+                {
+                    Data.GpuPower = reading.Value;
                 }
             }
         }

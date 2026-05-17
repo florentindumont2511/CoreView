@@ -126,9 +126,6 @@ namespace Monitoring_net9.Services
             Data.GpuUsage =
                 hardwareMonitorService.Data.GpuUsage;
 
-            Data.GpuTemperature =
-                hardwareMonitorService.Data.GpuTemperature;
-
             Data.GpuMemoryUsedGB =
                 hardwareMonitorService.Data.GpuMemoryUsedGB;
 
@@ -142,6 +139,9 @@ namespace Monitoring_net9.Services
             Data.CpuPower =
                 hwInfoService.Data.CpuPower;
 
+            Data.GpuTemperature =
+                hwInfoService.Data.GpuTemperature;
+
             Data.GpuClock =
                 hwInfoService.Data.GpuClock;
 
@@ -150,6 +150,9 @@ namespace Monitoring_net9.Services
 
             Data.GpuMemoryJunction =
                 hwInfoService.Data.GpuMemoryJunction;
+
+            Data.GpuPower =
+                hwInfoService.Data.GpuPower;
         }
     }
 }
