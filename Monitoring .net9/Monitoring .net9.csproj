@@ -10,6 +10,10 @@
     <UseWPF>true</UseWPF>
 
 	  <UseWindowsForms>true</UseWindowsForms>
+
+	  <ApplicationManifest>app.manifest</ApplicationManifest>
+
+	  <ApplicationIcon>ChatGPT Image 17 mai 2026, 15_39_44.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +23,10 @@
       <VersionMajor>2</VersionMajor>
       <Guid>215d64d2-031c-33c7-96e3-61794cd1ee61</Guid>
     </COMReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ChatGPT Image 17 mai 2026, 15_39_44.ico" />
   </ItemGroup>
 
   <ItemGroup>
