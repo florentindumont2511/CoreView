@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 
 
+
 namespace Monitoring_net9
 {
     public partial class MainWindow : Window
@@ -27,64 +28,68 @@ namespace Monitoring_net9
 
         private readonly DispatcherTimer hwInfoRestartTimer;
 
-        private void StartHwInfo()
+        private void MoveToMonitoringScreen()
         {
-            var existingProcess =
-                Process.GetProcessesByName("HWiNFO64");
+            var screens =
+                System.Windows.Forms.Screen.AllScreens;
 
-            if (existingProcess.Length > 0)
-            {
+            if (screens.Length < 3)
                 return;
-            }
 
-            string hwinfoPath =
-                @"C:\Program Files\HWiNFO64\HWiNFO64.EXE";
+            var targetScreen = screens[2];
 
-            if (File.Exists(hwinfoPath))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = hwinfoPath,
-                    UseShellExecute = true,
-                    Verb = "runas"
-                });
-            }
+            WindowState = WindowState.Normal;
+
+            Left = targetScreen.WorkingArea.Left;
+
+            Top = targetScreen.WorkingArea.Top;
+
+            Width = targetScreen.WorkingArea.Width;
+
+            Height = targetScreen.WorkingArea.Height;
+
+            WindowStyle = WindowStyle.None;
+
+            ResizeMode = ResizeMode.NoResize;
+
+            WindowState = WindowState.Maximized;
         }
 
-        private void RestartHwInfo()
+        private void MainWindow_Loaded(
+    object sender,
+    RoutedEventArgs e)
         {
-            var processes =
-                Process.GetProcessesByName("HWiNFO64");
+            MoveToMonitoringScreen();
+        }
 
-            foreach (var process in processes)
-            {
-                process.Kill();
-            }
-
-            Thread.Sleep(3000);
-
-            StartHwInfo();
-
-            Thread.Sleep(5000);
-
-            monitoringManager.Initialize();
+        private void MainWindow_ContentRendered(
+    object? sender,
+    EventArgs e)
+        {
+            MoveToMonitoringScreen();
         }
 
         public MainWindow()
         {
+            Topmost = true;
             InitializeComponent();
 
+            RenderOptions.ProcessRenderMode =
+    System.Windows.Interop.RenderMode.SoftwareOnly;
+
+
+            ContentRendered += MainWindow_ContentRendered;
 
 
             monitoringManager = new MonitoringManager();
 
             monitoringManager.Initialize();
 
-            StartHwInfo();
+            monitoringManager.StartHwInfo();
 
             Thread.Sleep(5000);
 
-
+            /*   Sert à afficher les sondes de HwInfo 64 pour les noms exactes
             string result = "";
 
 
@@ -99,7 +104,7 @@ namespace Monitoring_net9
                 }
             }
 
-            MessageBox.Show(result);
+            MessageBox.Show(result);*/
 
             GpuTempSeries =
             [
@@ -129,11 +134,26 @@ namespace Monitoring_net9
 
         }
 
-        protected override void OnKeyDown(KeyEventArgs e)
+        private void HwInfoRestartTimer_Tick(
+            object? sender,
+            EventArgs e)
         {
+            monitoringManager.RestartHwInfo();
+        }
+
+        protected override void OnKeyDown(
+    System.Windows.Input.KeyEventArgs e)
+        {
+            // Echap pour quitter
             if (e.Key == Key.Escape)
             {
-                Application.Current.Shutdown();
+                System.Windows.Application.Current.Shutdown();
+            }
+
+            // Bloque ALT + F4
+            if (e.SystemKey == Key.F4)
+            {
+                e.Handled = true;
             }
 
             base.OnKeyDown(e);
@@ -145,10 +165,18 @@ namespace Monitoring_net9
 
             DateText.Text = DateTime.Now.ToString(
                 "dddd dd MMMM yyyy",
-                new CultureInfo("fr-FR"));
+                new CultureInfo("fr-FR")); // Force la date en format français : JJ/MM/AAAA
 
+            try
+            {
+                monitoringManager.Update();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log(
+                    $"Update Screen Error: {ex.Message}");
+            }
 
-            monitoringManager.Update();
 
             CpuUsageText.Text =
                 $"{monitoringManager.Data.CpuUsage:F1} %";
@@ -159,15 +187,15 @@ namespace Monitoring_net9
             
             if (monitoringManager.Data.CpuTemperature > 90)
             {
-                CpuTempText.Foreground = Brushes.Red;
+                CpuTempText.Foreground = System.Windows.Media.Brushes.Red;
             }
             else if (monitoringManager.Data.CpuTemperature > 70)
             {
-                CpuTempText.Foreground = Brushes.Orange;
+                CpuTempText.Foreground = System.Windows.Media.Brushes.Orange;
             }
             else
             {
-                CpuTempText.Foreground = Brushes.White;
+                CpuTempText.Foreground = System.Windows.Media.Brushes.White;
             }
 
             CpuClockText.Text =
@@ -194,15 +222,15 @@ namespace Monitoring_net9
 
             if (monitoringManager.Data.GpuTemperature > 95)
             {
-                GpuTempText.Foreground = Brushes.Red;
+                GpuTempText.Foreground = System.Windows.Media.Brushes.Red;
             }
             else if (monitoringManager.Data.GpuTemperature > 80)
             {
-                GpuTempText.Foreground = Brushes.Orange;
+                GpuTempText.Foreground = System.Windows.Media.Brushes.Orange;
             }
             else
             {
-                GpuTempText.Foreground = Brushes.White;
+                GpuTempText.Foreground = System.Windows.Media.Brushes.White;
             }
 
             GpuMemoryText.Text =
@@ -218,13 +246,5 @@ namespace Monitoring_net9
                 $"{monitoringManager.Data.GpuMemoryJunction:F1} °C";
 
         }
-
-        private void HwInfoRestartTimer_Tick(
-            object? sender,
-            EventArgs e)
-        {
-            RestartHwInfo();
-        }
-
     }
 }

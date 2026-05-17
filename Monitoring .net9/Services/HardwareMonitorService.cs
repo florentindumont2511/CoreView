@@ -1,5 +1,6 @@
 ﻿using LibreHardwareMonitor.Hardware;
 using Monitoring_net9.Models;
+using Monitoring_net9.Services;
 
 namespace Monitoring.Services
 {
@@ -24,6 +25,7 @@ namespace Monitoring.Services
 
         public void Update()
         {
+
             foreach (var hardware in computer.Hardware)
             {
                 hardware.Update();

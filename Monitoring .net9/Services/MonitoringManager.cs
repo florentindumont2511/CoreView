@@ -2,9 +2,12 @@
 using Monitoring_net9.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
+using System.IO;
 
 namespace Monitoring_net9.Services
 {
@@ -28,6 +31,58 @@ namespace Monitoring_net9.Services
                 new HwInfoService();
         }
 
+        public void StartHwInfo()
+        {
+            var existingProcess =
+                Process.GetProcessesByName("HWiNFO64");
+
+            if (existingProcess.Length > 0)
+            {
+                return;
+            }
+
+            string hwinfoPath =
+                @"C:\Program Files\HWiNFO64\HWiNFO64.EXE";
+
+            if (File.Exists(hwinfoPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = hwinfoPath,
+                    UseShellExecute = true,
+                    Verb = "runas"
+                });
+
+                LoggerService.Log(
+                    "HWiNFO started");
+            }
+            else
+            {
+                LoggerService.Log(
+                    "HWiNFO executable not found");
+            }
+        }
+
+        public void RestartHwInfo()
+        {
+            hwInfoService.Disconnect();
+
+            foreach (var process in
+                     Process.GetProcessesByName("HWiNFO64"))
+            {
+                process.Kill();
+            }
+
+            Thread.Sleep(2000);
+
+            Process.Start(
+                @"C:\Program Files\HWiNFO64\HWiNFO64.EXE");
+
+            Thread.Sleep(5000);
+
+            hwInfoService.TryReconnect();
+        }
+
 
         //Méthode qui initialise les providers (HwInfo 64 et autres)
         public void Initialize()
@@ -43,6 +98,16 @@ namespace Monitoring_net9.Services
         {
             // HardwareMonitor
             hardwareMonitorService.Update();
+
+            if (!hwInfoService.IsConnected)
+            {
+                LoggerService.Log(
+                    "HWiNFO disconnected");
+
+                hwInfoService.TryReconnect();
+
+                return;
+            }
 
             // HWiNFO
             hwInfoService.ReadReadings();
@@ -86,7 +151,5 @@ namespace Monitoring_net9.Services
             Data.GpuMemoryJunction =
                 hwInfoService.Data.GpuMemoryJunction;
         }
-
-
     }
 }

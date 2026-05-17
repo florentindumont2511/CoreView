@@ -17,17 +17,76 @@ namespace Monitoring_net9.Services
 
         public double CpuTemperature { get; private set; }
 
+        public bool IsConnected { get; private set; }
+
+
         public bool Connect()
         {
             try
             {
-                memoryFile = MemoryMappedFile.OpenExisting("Global\\HWiNFO_SENS_SM2");
+                // Déjà connecté
+                if (memoryFile != null)
+                {
+                    return true;
+                }
+
+                memoryFile =
+                    MemoryMappedFile.OpenExisting(
+                        "Global\\HWiNFO_SENS_SM2");
+
+                if (memoryFile == null)
+                {
+                    IsConnected = false;
+
+                    return false;
+                }
+
+                IsConnected = true;
+
+                LoggerService.Log(
+                    "HWiNFO connected");
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                LoggerService.Log(
+                    $"HWiNFO Connect Error: {ex.Message}");
+
+                IsConnected = false;
+
                 return false;
+            }
+        }
+
+        public void TryReconnect()
+        {
+            if (Connect())
+            {
+                ReadHeader();
+
+                LoggerService.Log(
+                    "HWiNFO reconnected");
+            }
+        }
+
+        public void Disconnect()
+        {
+            try
+            {
+                memoryFile?.Dispose();
+
+                memoryFile = null;
+
+                IsConnected = false;
+
+                LoggerService.Log(
+                    "HWiNFO disconnected");
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log(
+                    $"Disconnect Error: {ex.Message}");
             }
         }
 
@@ -53,8 +112,11 @@ namespace Monitoring_net9.Services
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                LoggerService.Log(
+                    $"Error Reading Shared Memory: {ex.Message}");
+
                 return false;
             }
         }
@@ -96,8 +158,11 @@ namespace Monitoring_net9.Services
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                LoggerService.Log(
+                    $"Error Reading Sensor: {ex.Message}");
+
                 return false;
             }
         }
@@ -119,39 +184,38 @@ namespace Monitoring_net9.Services
             {
                 // CPU CLOCK
                 if (reading.LabelOrig.Contains(
-                    "Core 0 Clock (perf #1)"))
+                    "Core 0 Clock (perf #1)") && reading.Value > 0) // Contrôle à chaque fois du nom de la sonde et qu'il n'y ait pas une valeur nulle
                 {
                     Data.CpuClock = reading.Value;
                 }
 
                 // CPU POWER
                 if (reading.LabelOrig.Contains(
-                    "CPU Package Power"))
+                    "CPU Package Power") && reading.Value > 0)
                 {
                     Data.CpuPower = reading.Value;
                 }
 
                 // GPU CLOCK
                 if (reading.LabelOrig.Contains(
-                    "GPU Clock"))
+                    "GPU Clock") && reading.Value > 0)
                 {
                     Data.GpuClock = reading.Value;
                 }
 
                 // GPU HOTSPOT
                 if (reading.LabelOrig.Contains(
-                    "GPU Hot Spot"))
+                    "GPU Hot Spot") && reading.Value > 0)
                 {
                     Data.GpuHotspot = reading.Value;
                 }
 
                 // GPU MEMORY JUNCTION
                 if (reading.LabelOrig.Contains(
-                    "GPU Memory Junction"))
+                    "GPU Memory Junction") && reading.Value > 0)
                 {
                     Data.GpuMemoryJunction = reading.Value;
                 }
-
             }
         }
     }
