@@ -17,6 +17,10 @@ namespace Monitoring_net9.Services
 
         public double CpuTemperature { get; private set; }
 
+        public double GPUPower_Core { get; private set; }
+
+        public double GPUPower_SoC { get; private set; }
+
         public bool IsConnected { get; private set; }
 
 
@@ -180,6 +184,9 @@ namespace Monitoring_net9.Services
 
         public void UpdateAdvancedSensors()
         {
+            GPUPower_Core = 0;
+            GPUPower_SoC = 0;
+
             foreach (var reading in Readings)
             {
                 // CPU CLOCK
@@ -224,13 +231,21 @@ namespace Monitoring_net9.Services
                     Data.GpuMemoryJunction = reading.Value;
                 }
 
-                // GPU MEMORY JUNCTION
+                // GPU Power
                 if (reading.LabelOrig.Contains(
-                    "GPU Power Maximum") && reading.Value > 0)
+                    "GPU Core Input Power") && reading.Value > 0)
                 {
-                    Data.GpuPower = reading.Value;
+                    GPUPower_Core = reading.Value;
+                }
+
+                if (reading.LabelOrig.Contains(
+                    "GPU SoC Input Power") && reading.Value > 0)
+                {
+                    GPUPower_SoC = reading.Value;
                 }
             }
+
+            Data.GpuPower = GPUPower_Core + GPUPower_SoC;
         }
     }
 }
