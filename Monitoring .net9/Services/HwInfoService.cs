@@ -1,7 +1,6 @@
 ﻿using System.IO.MemoryMappedFiles;
 using Monitoring_net9.Models;
 using System.Runtime.InteropServices;
-using System.Linq;
 
 namespace Monitoring_net9.Services
 {
@@ -14,8 +13,6 @@ namespace Monitoring_net9.Services
         public SensorData Data { get; private set; } =  new SensorData();
 
         public List<HwInfoReadingElement> Readings { get; private set; } = [];
-
-        public double CpuTemperature { get; private set; }
 
         public double GPUPower_Core { get; private set; }
 

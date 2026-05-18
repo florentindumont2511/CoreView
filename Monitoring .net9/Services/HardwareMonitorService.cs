@@ -1,6 +1,5 @@
 ﻿using LibreHardwareMonitor.Hardware;
 using Monitoring_net9.Models;
-using Monitoring_net9.Services;
 
 namespace Monitoring.Services
 {

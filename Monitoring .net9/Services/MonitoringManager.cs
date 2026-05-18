@@ -1,12 +1,6 @@
 ﻿using Monitoring.Services;
 using Monitoring_net9.Models;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
 using System.IO;
 
 namespace Monitoring_net9.Services
@@ -16,8 +10,6 @@ namespace Monitoring_net9.Services
         private readonly HardwareMonitorService hardwareMonitorService;
 
         private readonly HwInfoService hwInfoService;
-
-        public List<HwInfoReadingElement> Readings =>hwInfoService.Readings;
 
         public SensorData Data { get; private set; } =
             new SensorData();

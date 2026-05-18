@@ -1,19 +1,9 @@
-﻿using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using Monitoring.Services;
-using Monitoring_net9.Services;
-using System;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
+﻿using Monitoring_net9.Services;
 using System.Globalization;
-using System.IO;
-using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using System.Windows.Interop;
-using System.Drawing;
 
 
 
@@ -24,9 +14,6 @@ namespace Monitoring_net9
         private readonly MonitoringManager monitoringManager;
 
         private readonly DispatcherTimer timer;
-        public ISeries[] GpuTempSeries { get; set; }
-
-        private ObservableCollection<double> gpuTempValues = new();
 
         private readonly DispatcherTimer hwInfoRestartTimer;
 
@@ -67,12 +54,6 @@ namespace Monitoring_net9
             Activate();
         }
 
-        private void MainWindow_Loaded(
-            object sender,
-            RoutedEventArgs e)
-                {
-                    MoveToMonitoringScreen();
-                }
 
         private void MainWindow_ContentRendered(
             object? sender,
@@ -120,16 +101,8 @@ namespace Monitoring_net9
 
             System.Windows.MessageBox.Show(result);*/
 
-            GpuTempSeries =
-            [
-                new LineSeries<double>
-                {
-                    Values = gpuTempValues
-                }
-            ];
 
-            DataContext = this;
-
+            //  TIMER POUR RAFRAICHISSEMENT ECRAN
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += Timer_Tick;
@@ -145,7 +118,6 @@ namespace Monitoring_net9
             hwInfoRestartTimer.Tick += HwInfoRestartTimer_Tick;
 
             hwInfoRestartTimer.Start();
-
         }
 
         private void HwInfoRestartTimer_Tick(
