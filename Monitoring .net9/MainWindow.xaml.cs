@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Hardcodet.Wpf.TaskbarNotification;
 
 
 
@@ -16,6 +17,7 @@ namespace Monitoring_net9
         private readonly DispatcherTimer timer;
 
         private readonly DispatcherTimer hwInfoRestartTimer;
+        private TaskbarIcon trayIcon;
 
         private void MoveToMonitoringScreen()
         {
@@ -62,14 +64,34 @@ namespace Monitoring_net9
                     MoveToMonitoringScreen();
                 }
 
+        protected override void OnClosed(
+            EventArgs e)
+        {
+            trayIcon.Dispose();
+
+            base.OnClosed(e);
+        }
+
         public MainWindow()
         {
             Loaded += (_, _) => MoveToMonitoringScreen();
             Topmost = true;
             InitializeComponent();
 
+
+            trayIcon = new TaskbarIcon();
+
+            trayIcon.Icon =
+                new System.Drawing.Icon(
+                    "Assets/monitoring.ico");
+
+            trayIcon.ToolTipText =
+                "Monitoring Dashboard";
+
+            ShowInTaskbar = false;
+
             RenderOptions.ProcessRenderMode =
-    System.Windows.Interop.RenderMode.SoftwareOnly;
+                System.Windows.Interop.RenderMode.SoftwareOnly;
 
 
             ContentRendered += MainWindow_ContentRendered;
