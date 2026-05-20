@@ -12,8 +12,6 @@
 	  <UseWindowsForms>true</UseWindowsForms>
 
 	  <ApplicationManifest>app.manifest</ApplicationManifest>
-
-	  <ApplicationIcon>ChatGPT Image 17 mai 2026, 15_39_44.ico</ApplicationIcon>
   </PropertyGroup>
 	
 
@@ -34,7 +32,6 @@
     <Content Include="Assets\monitoring.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="ChatGPT Image 17 mai 2026, 15_39_44.ico" />
   </ItemGroup>
 
   <ItemGroup>
