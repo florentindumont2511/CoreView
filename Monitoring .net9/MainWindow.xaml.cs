@@ -1,10 +1,11 @@
-﻿using Monitoring_net9.Services;
+﻿using Hardcodet.Wpf.TaskbarNotification;
+using Monitoring_net9.Services;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Hardcodet.Wpf.TaskbarNotification;
 
 
 
@@ -72,6 +73,24 @@ namespace Monitoring_net9
             base.OnClosed(e);
         }
 
+        private void TrayIcon_TrayMouseDoubleClick(
+            object sender,
+            RoutedEventArgs e)
+            {
+                if (IsVisible)
+                {
+                    Hide();
+                }
+                else
+                {
+                    Show();
+
+                    MoveToMonitoringScreen();
+
+                    Activate();
+                }
+            }
+
         public MainWindow()
         {
             Loaded += (_, _) => MoveToMonitoringScreen();
@@ -89,6 +108,23 @@ namespace Monitoring_net9
                 "Monitoring Dashboard";
 
             ShowInTaskbar = false;
+
+            trayIcon.ContextMenu = new ContextMenu();
+
+            trayIcon.ContextMenu.Items.Add(
+                new MenuItem
+                {
+                    Header = "Quitter"
+                });
+
+            ((MenuItem)trayIcon.ContextMenu.Items[0])
+            .Click += (_, _) =>
+            {
+                System.Windows.Application.Current.Shutdown();
+            };
+
+            trayIcon.TrayMouseDoubleClick +=
+                TrayIcon_TrayMouseDoubleClick;
 
             RenderOptions.ProcessRenderMode =
                 System.Windows.Interop.RenderMode.SoftwareOnly;
