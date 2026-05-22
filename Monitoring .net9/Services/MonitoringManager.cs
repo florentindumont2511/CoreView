@@ -131,6 +131,9 @@ namespace Monitoring_net9.Services
             Data.CpuPower =
                 hwInfoService.Data.CpuPower;
 
+            Data.CpuTension =
+                hwInfoService.Data.CpuTension;
+
             Data.GpuTemperature =
                 hwInfoService.Data.GpuTemperature;
 
@@ -145,6 +148,9 @@ namespace Monitoring_net9.Services
 
             Data.GpuPower =
                 hwInfoService.Data.GpuPower;
+
+            Data.GpuTension =
+                hwInfoService.Data.GpuTension;
         }
     }
 }

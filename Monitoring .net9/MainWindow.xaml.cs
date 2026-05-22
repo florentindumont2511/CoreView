@@ -141,24 +141,6 @@ namespace Monitoring_net9
 
             Thread.Sleep(5000);
 
-            /*
-            //Sert à afficher les sondes de HwInfo 64 pour les noms exactes
-            string result = "";
-
-
-            foreach (var reading in monitoringManager.Readings)
-            {
-                if (reading.LabelOrig.Contains(
-                    "GPU",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    result +=
-                        $"{reading.LabelOrig} = {reading.Value} {reading.Unit}\n";
-                }
-            }
-
-            System.Windows.MessageBox.Show(result);*/
-
 
             //  TIMER POUR RAFRAICHISSEMENT ECRAN
             timer = new DispatcherTimer();
@@ -223,11 +205,11 @@ namespace Monitoring_net9
 
 
             CpuUsageText.Text =
-                $"{monitoringManager.Data.CpuUsage:F1} %";
+                $"{monitoringManager.Data.CpuUsage:F1}";
 
 
             CpuTempText.Text =
-                $"{monitoringManager.Data.CpuTemperature:F1} °C";
+                $"{monitoringManager.Data.CpuTemperature:F1}";
             
             if (monitoringManager.Data.CpuTemperature > 90)
             {
@@ -243,19 +225,22 @@ namespace Monitoring_net9
             }
 
             CpuClockText.Text =
-                $"{monitoringManager.Data.CpuClock / 1000:F2} GHz";
+                $"{monitoringManager.Data.CpuClock / 1000:F2}";
 
             CpuPowerText.Text =
-                $"{monitoringManager.Data.CpuPower:F1} W";
+                $"{monitoringManager.Data.CpuPower:F1}";
+
+            CpuTensionText.Text =
+                $"{monitoringManager.Data.CpuTension:F3}";
 
             RamUsageText.Text =
-                $"{monitoringManager.Data.RamUsed:F1} GB";
+                $"{monitoringManager.Data.RamUsed:F1}";
 
             GpuUsageText.Text =
-                $"{monitoringManager.Data.GpuUsage:F1} %";
+                $"{monitoringManager.Data.GpuUsage:F1}";
 
             GpuTempText.Text =
-                $"{monitoringManager.Data.GpuTemperature:F1} °C";
+                $"{monitoringManager.Data.GpuTemperature:F1}";
 
 
             if (monitoringManager.Data.GpuTemperature > 95)
@@ -272,19 +257,34 @@ namespace Monitoring_net9
             }
 
             GpuMemoryText.Text =
-                $"{monitoringManager.Data.GpuMemoryUsedGB:F1} GB";
+                $"{monitoringManager.Data.GpuMemoryUsedGB:F1}";
 
             GpuClockText.Text =
-                $"{monitoringManager.Data.GpuClock:F0} MHz";
+                $"{monitoringManager.Data.GpuClock:F0}";
 
             GpuHotspotText.Text =
-                $"{monitoringManager.Data.GpuHotspot:F1} °C";
+                $"{monitoringManager.Data.GpuHotspot:F1}";
 
             GpuMemoryJunctionText.Text =
-                $"{monitoringManager.Data.GpuMemoryJunction:F1} °C";
+                $"{monitoringManager.Data.GpuMemoryJunction:F1}";
 
             GpuPowerText.Text =
-                $"{monitoringManager.Data.GpuPower:F1} W";
+                $"{monitoringManager.Data.GpuPower:F1}";
+
+            if (monitoringManager.Data.GpuTension >= 1)
+            {
+                GpuTensionText.Text =
+                    $"{monitoringManager.Data.GpuTension:F3}";
+
+                GpuTensionUnitText.Text = "V";
+            }
+            else
+            {
+                GpuTensionText.Text =
+                    $"{(monitoringManager.Data.GpuTension * 1000):F0}";
+
+                GpuTensionUnitText.Text = "mV";
+            }
         }
     }
 }

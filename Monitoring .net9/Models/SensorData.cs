@@ -11,6 +11,8 @@
 
         public double CpuPower { get; set; }
 
+        public double CpuTension { get; set; }
+
         // RAM
         public double RamUsed { get; set; }
 
@@ -28,5 +30,7 @@
         public double GpuMemoryJunction { get; set; }
 
         public double GpuPower { get; set; }
+
+        public double GpuTension { get; set; }
     }
 }

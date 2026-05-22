@@ -155,6 +155,18 @@ namespace Monitoring_net9.Services
                     Marshal.FreeHGlobal(ptr);
 
                     Readings.Add(reading);
+
+                    /*/ afficher les sondes  --------------------------------------------------------------------------
+
+                    if (reading.LabelOrig.Contains(
+                        "CPU",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        System.Diagnostics.Debug.WriteLine(
+                            $"{reading.LabelOrig} = {reading.Value} {reading.Unit}");
+                    }
+
+                    // -----------------------------------------------------------------------------------------------*/
                 }
 
                 return true;
@@ -200,6 +212,13 @@ namespace Monitoring_net9.Services
                     Data.CpuPower = reading.Value;
                 }
 
+                // CPU Tension
+                if (reading.LabelOrig.Contains(
+                    "CPU VDDCR_VDD Voltage") && reading.Value > 0)
+                {
+                    Data.CpuTension = reading.Value;
+                }
+
                 // GPU CLOCK
                 if (reading.LabelOrig.Contains(
                     "GPU Clock (Effective)") && reading.Value > 0)
@@ -239,6 +258,14 @@ namespace Monitoring_net9.Services
                     "GPU SoC Input Power") && reading.Value > 0)
                 {
                     GPUPower_SoC = reading.Value;
+                }
+
+                // GPU Tension
+                if (reading.LabelOrig.Contains(
+                    "GPU Core Voltage",
+                    StringComparison.OrdinalIgnoreCase) && reading.Value > 0)
+                {
+                    Data.GpuTension = reading.Value;
                 }
             }
 
