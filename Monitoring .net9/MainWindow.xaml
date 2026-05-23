@@ -8,7 +8,7 @@
         ResizeMode="NoResize"
         WindowState="Normal"
         Background="#151515">
-    
+
     <Window.Resources>
 
         <!-- Couleurs -->
@@ -195,7 +195,7 @@
                     </StackPanel>
 
                 </StackPanel>
-                
+
             </Border>
 
             <!-- CPU Clock -->
@@ -285,17 +285,20 @@
         </Grid>
 
 
-    <!-- COLONNE DROITE -->
+        <!-- COLONNE DROITE -->
 
         <Grid Grid.Column="2">
-            
-            
+
+
+
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
+
+
 
             <Grid.RowDefinitions>
 
@@ -327,6 +330,22 @@
                 <RowDefinition Height="Auto"/>
 
             </Grid.RowDefinitions>
+
+            <Button x:Name="SettingsButton"
+                    Content="⚙"
+                    Width="70"
+                    Height="70"
+                    FontSize="46"
+                    Background="Transparent"
+                    Foreground="White"
+                    BorderBrush="Transparent"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,12,10,0"
+                    Click="SettingsButton_Click"
+                    RenderTransformOrigin="3.4,0.549"
+                    Grid.Column="2"
+                    Panel.ZIndex="999"/>
 
             <TextBlock Grid.Row="0"
                        Grid.ColumnSpan="3"
@@ -389,7 +408,7 @@
                     </StackPanel>
 
                 </StackPanel>
-                
+
             </Border>
 
             <!-- GPU Clock -->
@@ -417,7 +436,7 @@
                     </StackPanel>
 
                 </StackPanel>
-                
+
             </Border>
 
             <!-- VRAM -->
@@ -445,10 +464,10 @@
                     </StackPanel>
 
                 </StackPanel>
-                
+
             </Border>
-            
-            
+
+
             <Border Grid.Row="6"
                     Grid.Column="0"
                     Background="#252525"
@@ -473,11 +492,11 @@
                     </StackPanel>
 
                 </StackPanel>
-                
+
             </Border>
 
-        <!-- GPU Memory Junction -->
-        <Border Grid.Row="6"
+            <!-- GPU Memory Junction -->
+            <Border Grid.Row="6"
                 Grid.Column="2"
                 Background="#252525"
                 CornerRadius="20"
@@ -538,7 +557,7 @@
                 Background="#252525"
                 CornerRadius="20"
                 Padding="5">
-                
+
                 <StackPanel>
 
                     <!-- LABEL -->
