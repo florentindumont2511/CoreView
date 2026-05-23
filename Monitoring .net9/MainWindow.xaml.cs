@@ -1,5 +1,6 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
 using Monitoring_.net9;
+using Monitoring_net9.Models;
 using Monitoring_net9.Services;
 using System.Globalization;
 using System.Windows;
@@ -7,8 +8,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Forms = System.Windows.Forms;
-
 
 
 namespace Monitoring_net9
@@ -24,13 +23,22 @@ namespace Monitoring_net9
 
         private SettingsWindow settingsWindow;
 
+        private AppSettings settings;
+
         private void MoveToMonitoringScreen()
         {
-            var screens = System.Windows.Forms.Screen.AllScreens;
+            var screens =
+                System.Windows.Forms.Screen.AllScreens;
 
-            var targetScreen =
+            Screen? targetScreen =
                 screens.FirstOrDefault(
-                    s => s.DeviceName.Contains("DISPLAY3"));
+                    s => s.DeviceName.Contains(
+                        settings.SelectedScreen));
+
+            if (targetScreen == null)
+            {
+                targetScreen = screens.LastOrDefault();
+            }
 
             if (targetScreen == null)
                 return;
@@ -109,11 +117,14 @@ namespace Monitoring_net9
                     settingsWindow.ShowDialog();
                 }
 
+
         public MainWindow()
         {
             Loaded += (_, _) => MoveToMonitoringScreen();
             Topmost = true;
             InitializeComponent();
+
+            settings = SettingsService.Load();
 
 
             trayIcon = new TaskbarIcon();
