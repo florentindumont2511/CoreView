@@ -1,4 +1,5 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
+using Monitoring_.net9;
 using Monitoring_net9.Services;
 using System.Globalization;
 using System.Windows;
@@ -6,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Forms = System.Windows.Forms;
 
 
 
@@ -19,6 +21,8 @@ namespace Monitoring_net9
 
         private readonly DispatcherTimer hwInfoRestartTimer;
         private TaskbarIcon trayIcon;
+
+        private SettingsWindow settingsWindow;
 
         private void MoveToMonitoringScreen()
         {
@@ -91,6 +95,20 @@ namespace Monitoring_net9
                 }
             }
 
+        private void SettingsButton_Click(
+            object sender,
+            RoutedEventArgs e)
+                {
+                    SettingsWindow settingsWindow =
+                        new SettingsWindow();
+
+                    settingsWindow.Owner = this;
+
+                    settingsWindow.Topmost = true;
+
+                    settingsWindow.ShowDialog();
+                }
+
         public MainWindow()
         {
             Loaded += (_, _) => MoveToMonitoringScreen();
@@ -111,17 +129,39 @@ namespace Monitoring_net9
 
             trayIcon.ContextMenu = new ContextMenu();
 
-            trayIcon.ContextMenu.Items.Add(
-                new MenuItem
-                {
-                    Header = "Quitter"
-                });
+            MenuItem settingsItem = new MenuItem
+            {
+                Header = "Options"
+            };
 
-            ((MenuItem)trayIcon.ContextMenu.Items[0])
-            .Click += (_, _) =>
+            settingsItem.Click += (_, _) =>
+            {
+                if (settingsWindow == null || !settingsWindow.IsLoaded)
+                {
+                    settingsWindow = new SettingsWindow();
+                }
+
+                settingsWindow.Owner = this;
+
+                settingsWindow.Topmost = true;
+
+                settingsWindow.ShowDialog();
+            };
+
+            trayIcon.ContextMenu.Items.Add(settingsItem);
+
+            MenuItem quitItem = new MenuItem
+            {
+                Header = "Quitter"
+            };
+
+            quitItem.Click += (_, _) =>
             {
                 System.Windows.Application.Current.Shutdown();
             };
+
+            trayIcon.ContextMenu.Items.Add(quitItem);
+
 
             trayIcon.TrayMouseDoubleClick +=
                 TrayIcon_TrayMouseDoubleClick;
