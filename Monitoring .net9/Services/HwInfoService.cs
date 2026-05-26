@@ -159,7 +159,7 @@ namespace Monitoring_net9.Services
                     /*/ afficher les sondes  --------------------------------------------------------------------------
 
                     if (reading.LabelOrig.Contains(
-                        "CPU",
+                        "GPU",
                         StringComparison.OrdinalIgnoreCase))
                     {
                         System.Diagnostics.Debug.WriteLine(
