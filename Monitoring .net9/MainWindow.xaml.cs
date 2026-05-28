@@ -195,7 +195,7 @@ namespace Monitoring_net9
 
             //  TIMER POUR RAFRAICHISSEMENT ECRAN
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(2);
+            timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += Timer_Tick;
             timer.Start();
 
