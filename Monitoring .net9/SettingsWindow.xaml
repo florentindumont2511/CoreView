@@ -46,6 +46,11 @@
                       Checked="StartupCheckBox_Checked"
                       Unchecked="StartupCheckBox_Unchecked" Margin="0,0,0,10"/>
 
+            <CheckBox x:Name="FullscreenCheckBox"
+                      Content="Mode plein écran"
+                      Foreground="White"
+                      FontSize="18"
+                      Margin="0,0,0,10"/>
 
         </StackPanel>
 

@@ -62,9 +62,26 @@ namespace Monitoring_net9
             Width = targetScreen.Bounds.Width * dpiX;
             Height = targetScreen.Bounds.Height * dpiY;
 
-            WindowStyle = WindowStyle.None;
-            ResizeMode = ResizeMode.NoResize;
-            Topmost = true;
+
+            if (settings.Fullscreen)
+            {
+                WindowStyle = WindowStyle.None;
+
+                ResizeMode = ResizeMode.NoResize;
+
+                WindowState = WindowState.Maximized;
+            }
+            else
+            {
+                WindowStyle = WindowStyle.SingleBorderWindow;
+
+                ResizeMode = ResizeMode.CanResize;
+
+                WindowState = WindowState.Normal;
+
+                Width = 1280;
+                Height = 720;
+            }
 
             Activate();
         }

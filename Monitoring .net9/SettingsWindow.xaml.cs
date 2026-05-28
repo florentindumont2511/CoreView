@@ -12,6 +12,7 @@ namespace Monitoring_.net9
     /// </summary>
     public partial class SettingsWindow : Window
     {
+
         public SettingsWindow()
         {
             InitializeComponent();
@@ -28,6 +29,12 @@ namespace Monitoring_.net9
 
             StartupCheckBox.IsChecked =
                 key.GetValue("CoreView") != null;
+
+            AppSettings settings =
+                SettingsService.Load();
+
+            FullscreenCheckBox.IsChecked =
+                settings.Fullscreen;
         }
 
         private void SaveButton_Click(
@@ -36,6 +43,8 @@ namespace Monitoring_.net9
                 {
                     AppSettings settings =
                         SettingsService.Load();
+                    settings.Fullscreen =
+                        FullscreenCheckBox.IsChecked == true;
 
                     settings.SelectedScreen =
                         ScreenComboBox.SelectedItem?.ToString()
@@ -44,7 +53,9 @@ namespace Monitoring_.net9
                     SettingsService.Save(settings);
 
                     System.Windows.MessageBox.Show(
-                        "Écran sauvegardé !");
+                        "Paramètres sauvegardés !\nRelancez le logiciel pour les paramètres prennent effets");
+
+
                 }
 
         private void StartupCheckBox_Checked(

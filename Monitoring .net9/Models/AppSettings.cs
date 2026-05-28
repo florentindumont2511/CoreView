@@ -13,5 +13,11 @@ namespace Monitoring_net9.Models
             get;
             set;
         } = "DISPLAY1";
+
+        public bool Fullscreen
+        {
+            get;
+            set;
+        } = true;
     }
 }
