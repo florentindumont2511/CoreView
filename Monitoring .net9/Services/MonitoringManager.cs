@@ -1,156 +1,133 @@
-﻿using Monitoring.Services;
 using Monitoring_net9.Models;
 using System.Diagnostics;
 using System.IO;
 
 namespace Monitoring_net9.Services
 {
-    public class MonitoringManager
+    public class MonitoringManager : IDisposable
     {
-        private readonly HardwareMonitorService hardwareMonitorService;
+        private const string HwInfoProcessName = "HWiNFO64";
+        private const string HwInfoPath = @"C:\Program Files\HWiNFO64\HWiNFO64.EXE";
 
+        private readonly HardwareMonitorService hardwareMonitorService;
         private readonly HwInfoService hwInfoService;
 
-        public SensorData Data { get; private set; } =
-            new SensorData();
+        public SensorData Data { get; } = new();
 
         public MonitoringManager()
         {
-            hardwareMonitorService =
-                new HardwareMonitorService();
+            hardwareMonitorService = new HardwareMonitorService();
+            hwInfoService = new HwInfoService();
+        }
 
-            hwInfoService =
-                new HwInfoService();
+        public void Initialize()
+        {
+            StartHwInfo();
+            ConnectHwInfo();
         }
 
         public void StartHwInfo()
         {
-            var existingProcess =
-                Process.GetProcessesByName("HWiNFO64");
-
-            if (existingProcess.Length > 0)
+            if (Process.GetProcessesByName(HwInfoProcessName).Length > 0)
             {
                 return;
             }
 
-            string hwinfoPath =
-                @"C:\Program Files\HWiNFO64\HWiNFO64.EXE";
-
-            if (File.Exists(hwinfoPath))
+            if (!File.Exists(HwInfoPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = hwinfoPath,
-                    UseShellExecute = true,
-                    Verb = "runas"
-                });
+                LoggerService.Log("HWiNFO executable not found");
+                return;
+            }
 
-                LoggerService.Log(
-                    "HWiNFO started");
-            }
-            else
+            Process.Start(new ProcessStartInfo
             {
-                LoggerService.Log(
-                    "HWiNFO executable not found");
-            }
+                FileName = HwInfoPath,
+                UseShellExecute = true,
+                Verb = "runas"
+            });
+
+            LoggerService.Log("HWiNFO started");
         }
 
         public void RestartHwInfo()
         {
             hwInfoService.Disconnect();
 
-            foreach (var process in
-                     Process.GetProcessesByName("HWiNFO64"))
+            foreach (var process in Process.GetProcessesByName(HwInfoProcessName))
             {
-                process.Kill();
+                try
+                {
+                    process.Kill();
+                    process.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    LoggerService.Log($"HWiNFO kill error: {ex.Message}");
+                }
             }
 
             Thread.Sleep(2000);
-
-            Process.Start(
-                @"C:\Program Files\HWiNFO64\HWiNFO64.EXE");
-
+            StartHwInfo();
             Thread.Sleep(5000);
-
-            hwInfoService.TryReconnect();
-        }
-
-
-        //Méthode qui initialise les providers (HwInfo 64 et autres)
-        public void Initialize()
-        {
-            hwInfoService.Connect();
-
-            hwInfoService.ReadHeader();
-
-            hwInfoService.ReadReadings();
+            ConnectHwInfo();
         }
 
         public void Update()
         {
-            // HardwareMonitor
             hardwareMonitorService.Update();
 
             if (!hwInfoService.IsConnected)
             {
-                LoggerService.Log(
-                    "HWiNFO disconnected");
+                ConnectHwInfo();
+            }
 
-                hwInfoService.TryReconnect();
+            if (hwInfoService.IsConnected &&
+                hwInfoService.ReadHeader() &&
+                hwInfoService.ReadReadings())
+            {
+                hwInfoService.UpdateCpuTemperature();
+                hwInfoService.UpdateAdvancedSensors();
+            }
 
+            MergeData();
+        }
+
+        public void Dispose()
+        {
+            hwInfoService.Disconnect();
+            hardwareMonitorService.Dispose();
+        }
+
+        private void ConnectHwInfo()
+        {
+            if (!hwInfoService.Connect())
+            {
                 return;
             }
 
-            // HWiNFO
-            hwInfoService.ReadReadings();
+            if (!hwInfoService.ReadHeader())
+            {
+                hwInfoService.Disconnect();
+            }
+        }
 
-            hwInfoService.UpdateCpuTemperature();
+        private void MergeData()
+        {
+            Data.CpuUsage = hardwareMonitorService.Data.CpuUsage;
+            Data.RamUsed = hardwareMonitorService.Data.RamUsed;
+            Data.GpuUsage = hardwareMonitorService.Data.GpuUsage;
+            Data.GpuMemoryUsedGB = hardwareMonitorService.Data.GpuMemoryUsedGB;
 
-            hwInfoService.UpdateAdvancedSensors();
-
-            // Fusion des données
-            Data.CpuUsage =
-                hardwareMonitorService.Data.CpuUsage;
-
-            Data.RamUsed =
-                hardwareMonitorService.Data.RamUsed;
-
-            Data.GpuUsage =
-                hardwareMonitorService.Data.GpuUsage;
-
-            Data.GpuMemoryUsedGB =
-                hardwareMonitorService.Data.GpuMemoryUsedGB;
-
-            // Température CPU HWiNFO
-            Data.CpuTemperature =
-                hwInfoService.Data.CpuTemperature;
-
-            Data.CpuClock =
-                hwInfoService.Data.CpuClock;
-
-            Data.CpuPower =
-                hwInfoService.Data.CpuPower;
-
-            Data.CpuTension =
-                hwInfoService.Data.CpuTension;
-
-            Data.GpuTemperature =
-                hwInfoService.Data.GpuTemperature;
-
-            Data.GpuClock =
-                hwInfoService.Data.GpuClock;
-
-            Data.GpuHotspot =
-                hwInfoService.Data.GpuHotspot;
-
-            Data.GpuMemoryJunction =
-                hwInfoService.Data.GpuMemoryJunction;
-
-            Data.GpuPower =
-                hwInfoService.Data.GpuPower;
-
-            Data.GpuTension =
-                hwInfoService.Data.GpuTension;
+            Data.CpuTemperature = hwInfoService.Data.CpuTemperature;
+            Data.CpuClock = hwInfoService.Data.CpuClock;
+            Data.CpuPower = hwInfoService.Data.CpuPower;
+            Data.CpuTension = hwInfoService.Data.CpuTension;
+            Data.GpuTemperature = hwInfoService.Data.GpuTemperature;
+            Data.GpuClock = hwInfoService.Data.GpuClock;
+            Data.GpuHotspot = hwInfoService.Data.GpuHotspot;
+            Data.GpuMemoryJunction = hwInfoService.Data.GpuMemoryJunction;
+            Data.GpuPower = hwInfoService.Data.GpuPower;
+            Data.GpuTension = hwInfoService.Data.GpuTension;
         }
     }
 }
