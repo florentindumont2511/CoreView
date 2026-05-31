@@ -1,8 +1,6 @@
 ﻿<Window x:Class="Monitoring_net9.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
-        xmlns:tb="http://www.hardcodet.net/taskbar"
         Title="Monitoring"
         WindowStyle="None"
         ResizeMode="NoResize"

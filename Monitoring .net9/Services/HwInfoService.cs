@@ -1,73 +1,47 @@
-﻿using System.IO.MemoryMappedFiles;
 using Monitoring_net9.Models;
+using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 
 namespace Monitoring_net9.Services
 {
     public class HwInfoService
     {
+        private const string SharedMemoryName = "Global\\HWiNFO_SENS_SM2";
+
         private MemoryMappedFile? memoryFile;
 
         public HwInfoSharedMemHeader Header { get; private set; }
 
-        public SensorData Data { get; private set; } =  new SensorData();
+        public SensorData Data { get; } = new();
 
-        public List<HwInfoReadingElement> Readings { get; private set; } = [];
-
-        public double GPUPower_Core { get; private set; }
-
-        public double GPUPower_SoC { get; private set; }
+        public List<HwInfoReadingElement> Readings { get; } = [];
 
         public bool IsConnected { get; private set; }
 
-
         public bool Connect()
         {
+            if (memoryFile != null)
+            {
+                IsConnected = true;
+                return true;
+            }
+
             try
             {
-                // Déjà connecté
-                if (memoryFile != null)
-                {
-                    return true;
-                }
-
                 memoryFile =
-                    MemoryMappedFile.OpenExisting(
-                        "Global\\HWiNFO_SENS_SM2");
-
-                if (memoryFile == null)
-                {
-                    IsConnected = false;
-
-                    return false;
-                }
+                    MemoryMappedFile.OpenExisting(SharedMemoryName);
 
                 IsConnected = true;
-
-                LoggerService.Log(
-                    "HWiNFO connected");
+                LoggerService.Log("HWiNFO connected");
 
                 return true;
             }
             catch (Exception ex)
             {
-                LoggerService.Log(
-                    $"HWiNFO Connect Error: {ex.Message}");
-
+                LoggerService.Log($"HWiNFO Connect Error: {ex.Message}");
                 IsConnected = false;
 
                 return false;
-            }
-        }
-
-        public void TryReconnect()
-        {
-            if (Connect())
-            {
-                ReadHeader();
-
-                LoggerService.Log(
-                    "HWiNFO reconnected");
             }
         }
 
@@ -76,47 +50,41 @@ namespace Monitoring_net9.Services
             try
             {
                 memoryFile?.Dispose();
-
-                memoryFile = null;
-
-                IsConnected = false;
-
-                LoggerService.Log(
-                    "HWiNFO disconnected");
             }
             catch (Exception ex)
             {
-                LoggerService.Log(
-                    $"Disconnect Error: {ex.Message}");
+                LoggerService.Log($"Disconnect Error: {ex.Message}");
+            }
+            finally
+            {
+                memoryFile = null;
+                IsConnected = false;
             }
         }
 
         public bool ReadHeader()
         {
+            if (memoryFile == null)
+            {
+                IsConnected = false;
+                return false;
+            }
+
             try
             {
-                using var accessor = memoryFile!.CreateViewAccessor();
+                using var accessor = memoryFile.CreateViewAccessor();
 
-                int size = Marshal.SizeOf<HwInfoSharedMemHeader>();
-
-                byte[] buffer = new byte[size];
-
-                accessor.ReadArray(0, buffer, 0, size);
-
-                IntPtr ptr = Marshal.AllocHGlobal(size);
-
-                Marshal.Copy(buffer, 0, ptr, size);
-
-                Header = Marshal.PtrToStructure<HwInfoSharedMemHeader>(ptr);
-
-                Marshal.FreeHGlobal(ptr);
+                Header = ReadStruct<HwInfoSharedMemHeader>(
+                    accessor,
+                    0,
+                    Marshal.SizeOf<HwInfoSharedMemHeader>());
 
                 return true;
             }
             catch (Exception ex)
             {
-                LoggerService.Log(
-                    $"Error Reading Shared Memory: {ex.Message}");
+                LoggerService.Log($"Error Reading Shared Memory: {ex.Message}");
+                Disconnect();
 
                 return false;
             }
@@ -124,57 +92,38 @@ namespace Monitoring_net9.Services
 
         public bool ReadReadings()
         {
+            if (memoryFile == null)
+            {
+                IsConnected = false;
+                return false;
+            }
+
             try
             {
                 Readings.Clear();
 
-                using var accessor = memoryFile!.CreateViewAccessor();
+                using var accessor = memoryFile.CreateViewAccessor();
+                int elementSize = Marshal.SizeOf<HwInfoReadingElement>();
 
-                int elementSize =
-                    Marshal.SizeOf<HwInfoReadingElement>();
-
-                for (int i = 0;
-                     i < Header.ReadingElementCount;
-                     i++)
+                for (int i = 0; i < Header.ReadingElementCount; i++)
                 {
                     long offset =
                         Header.ReadingSectionOffset +
                         (i * Header.ReadingElementSize);
 
-                    byte[] buffer = new byte[elementSize];
-
-                    accessor.ReadArray(offset, buffer, 0, elementSize);
-
-                    IntPtr ptr = Marshal.AllocHGlobal(elementSize);
-
-                    Marshal.Copy(buffer, 0, ptr, elementSize);
-
-                    var reading =
-                        Marshal.PtrToStructure<HwInfoReadingElement>(ptr);
-
-                    Marshal.FreeHGlobal(ptr);
-
-                    Readings.Add(reading);
-
-                    /*/ afficher les sondes  --------------------------------------------------------------------------
-
-                    if (reading.LabelOrig.Contains(
-                        "GPU",
-                        StringComparison.OrdinalIgnoreCase))
-                    {
-                        System.Diagnostics.Debug.WriteLine(
-                            $"{reading.LabelOrig} = {reading.Value} {reading.Unit}");
-                    }
-
-                    // -----------------------------------------------------------------------------------------------*/
+                    Readings.Add(
+                        ReadStruct<HwInfoReadingElement>(
+                            accessor,
+                            offset,
+                            elementSize));
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                LoggerService.Log(
-                    $"Error Reading Sensor: {ex.Message}");
+                LoggerService.Log($"Error Reading Sensor: {ex.Message}");
+                Disconnect();
 
                 return false;
             }
@@ -183,7 +132,7 @@ namespace Monitoring_net9.Services
         public void UpdateCpuTemperature()
         {
             var cpuTempReading = Readings.FirstOrDefault(
-                r => r.LabelOrig.Contains("Tctl/Tdie"));
+                r => ContainsLabel(r, "Tctl/Tdie"));
 
             if (!string.IsNullOrEmpty(cpuTempReading.LabelOrig))
             {
@@ -193,83 +142,98 @@ namespace Monitoring_net9.Services
 
         public void UpdateAdvancedSensors()
         {
-            GPUPower_Core = 0;
-            GPUPower_SoC = 0;
+            double gpuPowerCore = 0;
+            double gpuPowerSoc = 0;
 
-            foreach (var reading in Readings)
+            foreach (var reading in Readings.Where(r => r.Value > 0))
             {
-                // CPU CLOCK
-                if (reading.LabelOrig.Contains(
-                    "Core 0 Clock (perf #1)") && reading.Value > 0) // Contrôle à chaque fois du nom de la sonde et qu'il n'y ait pas une valeur nulle
-                {
-                    Data.CpuClock = reading.Value;
-                }
-
-                // CPU POWER
-                if (reading.LabelOrig.Contains(
-                    "CPU Package Power") && reading.Value > 0)
-                {
-                    Data.CpuPower = reading.Value;
-                }
-
-                // CPU Tension
-                if (reading.LabelOrig.Contains(
-                    "CPU VDDCR_VDD Voltage") && reading.Value > 0)
-                {
-                    Data.CpuTension = reading.Value;
-                }
-
-                // GPU CLOCK
-                if (reading.LabelOrig.Contains(
-                    "GPU Clock (Effective)") && reading.Value > 0)
-                {
-                    Data.GpuClock = reading.Value;
-                }
-
-                // GPU Temp
-                if (reading.LabelOrig.Contains(
-                    "GPU Temperature") && reading.Value > 0)
-                {
-                    Data.GpuTemperature = reading.Value;
-                }
-
-                // GPU HOTSPOT
-                if (reading.LabelOrig.Contains(
-                    "GPU Hot Spot") && reading.Value > 0)
-                {
-                    Data.GpuHotspot = reading.Value;
-                }
-
-                // GPU MEMORY JUNCTION
-                if (reading.LabelOrig.Contains(
-                    "GPU Memory Junction") && reading.Value > 0)
-                {
-                    Data.GpuMemoryJunction = reading.Value;
-                }
-
-                // GPU Power
-                if (reading.LabelOrig.Contains(
-                    "GPU Core Input Power") && reading.Value > 0)
-                {
-                    GPUPower_Core = reading.Value;
-                }
-
-                if (reading.LabelOrig.Contains(
-                    "GPU SoC Input Power") && reading.Value > 0)
-                {
-                    GPUPower_SoC = reading.Value;
-                }
-
-                // GPU Tension
-                if (reading.LabelOrig.Contains(
-                    "GPU Core Voltage",
-                    StringComparison.OrdinalIgnoreCase) && reading.Value > 0)
-                {
-                    Data.GpuTension = reading.Value;
-                }
+                UpdateCpuSensor(reading);
+                UpdateGpuSensor(reading, ref gpuPowerCore, ref gpuPowerSoc);
             }
 
-            Data.GpuPower = GPUPower_Core + GPUPower_SoC;
+            Data.GpuPower = gpuPowerCore + gpuPowerSoc;
+        }
+
+        private static T ReadStruct<T>(
+            MemoryMappedViewAccessor accessor,
+            long offset,
+            int size)
+            where T : struct
+        {
+            byte[] buffer = new byte[size];
+            accessor.ReadArray(offset, buffer, 0, size);
+
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+
+            try
+            {
+                Marshal.Copy(buffer, 0, ptr, size);
+                return Marshal.PtrToStructure<T>(ptr);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
+            }
+        }
+
+        private void UpdateCpuSensor(HwInfoReadingElement reading)
+        {
+            if (ContainsLabel(reading, "Core 0 Clock (perf #1)"))
+            {
+                Data.CpuClock = reading.Value;
+            }
+            else if (ContainsLabel(reading, "CPU Package Power"))
+            {
+                Data.CpuPower = reading.Value;
+            }
+            else if (ContainsLabel(reading, "CPU VDDCR_VDD Voltage"))
+            {
+                Data.CpuTension = reading.Value;
+            }
+        }
+
+        private void UpdateGpuSensor(
+            HwInfoReadingElement reading,
+            ref double gpuPowerCore,
+            ref double gpuPowerSoc)
+        {
+            if (ContainsLabel(reading, "GPU Clock (Effective)"))
+            {
+                Data.GpuClock = reading.Value;
+            }
+            else if (ContainsLabel(reading, "GPU Temperature"))
+            {
+                Data.GpuTemperature = reading.Value;
+            }
+            else if (ContainsLabel(reading, "GPU Hot Spot"))
+            {
+                Data.GpuHotspot = reading.Value;
+            }
+            else if (ContainsLabel(reading, "GPU Memory Junction"))
+            {
+                Data.GpuMemoryJunction = reading.Value;
+            }
+            else if (ContainsLabel(reading, "GPU Core Input Power"))
+            {
+                gpuPowerCore = reading.Value;
+            }
+            else if (ContainsLabel(reading, "GPU SoC Input Power"))
+            {
+                gpuPowerSoc = reading.Value;
+            }
+            else if (ContainsLabel(reading, "GPU Core Voltage"))
+            {
+                Data.GpuTension = reading.Value;
+            }
+        }
+
+        private static bool ContainsLabel(
+            HwInfoReadingElement reading,
+            string label)
+        {
+            return reading.LabelOrig?.Contains(
+                label,
+                StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }
