@@ -223,7 +223,7 @@ namespace Monitoring_net9
                 GetTemperatureBrush(monitoringManager.Data.GpuTemperature, 80, 95);
             GpuMemoryText.Text = $"{monitoringManager.Data.GpuMemoryUsedGB:F1}";
             GpuClockText.Text = $"{monitoringManager.Data.GpuClock:F0}";
-            GpuHotspotText.Text = $"{monitoringManager.Data.GpuHotspot:F0}";
+            GpuHotspotText.Text = $"{monitoringManager.Data.GpuHotspot:F1}";
             GpuMemoryJunctionText.Text =
                 $"{monitoringManager.Data.GpuMemoryJunction:F0}";
             GpuPowerText.Text = $"{monitoringManager.Data.GpuPower:F1}";
