@@ -218,14 +218,14 @@ namespace Monitoring_net9
         private void UpdateGpuUi()
         {
             GpuUsageText.Text = $"{monitoringManager.Data.GpuUsage:F1}";
-            GpuTempText.Text = $"{monitoringManager.Data.GpuTemperature:F1}";
+            GpuTempText.Text = $"{monitoringManager.Data.GpuTemperature:F0}";
             GpuTempText.Foreground =
                 GetTemperatureBrush(monitoringManager.Data.GpuTemperature, 80, 95);
             GpuMemoryText.Text = $"{monitoringManager.Data.GpuMemoryUsedGB:F1}";
             GpuClockText.Text = $"{monitoringManager.Data.GpuClock:F0}";
-            GpuHotspotText.Text = $"{monitoringManager.Data.GpuHotspot:F1}";
+            GpuHotspotText.Text = $"{monitoringManager.Data.GpuHotspot:F0}";
             GpuMemoryJunctionText.Text =
-                $"{monitoringManager.Data.GpuMemoryJunction:F1}";
+                $"{monitoringManager.Data.GpuMemoryJunction:F0}";
             GpuPowerText.Text = $"{monitoringManager.Data.GpuPower:F1}";
 
             if (monitoringManager.Data.GpuTension >= 1)
