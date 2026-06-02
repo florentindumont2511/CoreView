@@ -1,0 +1,34 @@
+<UserControl x:Class="Monitoring_net9.Controls.MetricTile"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+
+    <Border Background="{Binding TileBrush, ElementName=Root}"
+            CornerRadius="20"
+            Padding="5">
+
+        <StackPanel>
+
+            <TextBlock Text="{Binding Title, ElementName=Root}"
+                       Foreground="{Binding TitleBrush, ElementName=Root}"
+                       FontSize="55"/>
+
+            <StackPanel Orientation="Horizontal">
+
+                <TextBlock Text="{Binding Value, ElementName=Root}"
+                           Foreground="{Binding ValueBrush, ElementName=Root}"
+                           FontSize="90"
+                           FontWeight="Bold"/>
+
+                <TextBlock Text="{Binding Unit, ElementName=Root}"
+                           Foreground="{Binding UnitBrush, ElementName=Root}"
+                           FontSize="60"
+                           Margin="25,0,0,7"
+                           VerticalAlignment="Bottom"/>
+
+            </StackPanel>
+
+        </StackPanel>
+
+    </Border>
+</UserControl>

@@ -1,11 +1,10 @@
 using Hardcodet.Wpf.TaskbarNotification;
 using Monitoring_net9.Models;
 using Monitoring_net9.Services;
-using System.Globalization;
+using Monitoring_net9.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
 using Forms = System.Windows.Forms;
 
@@ -17,18 +16,22 @@ namespace Monitoring_net9
         private readonly DispatcherTimer timer;
         private readonly DispatcherTimer hwInfoRestartTimer;
         private readonly TaskbarIcon trayIcon;
+        private readonly MainWindowViewModel viewModel = new();
 
         private SettingsWindow? settingsWindow;
         private AppSettings settings;
+        private bool isRestartingHwInfo;
 
         public MainWindow()
         {
             InitializeComponent();
 
+            DataContext = viewModel;
             settings = SettingsService.Load();
+            viewModel.ApplySettings(settings);
             Topmost = true;
             ShowInTaskbar = false;
-            RenderOptions.ProcessRenderMode =
+            System.Windows.Media.RenderOptions.ProcessRenderMode =
                 System.Windows.Interop.RenderMode.SoftwareOnly;
 
             trayIcon = CreateTrayIcon();
@@ -50,7 +53,7 @@ namespace Monitoring_net9
             {
                 Interval = TimeSpan.FromHours(11)
             };
-            hwInfoRestartTimer.Tick += (_, _) => monitoringManager.RestartHwInfo();
+            hwInfoRestartTimer.Tick += HwInfoRestartTimer_Tick;
             hwInfoRestartTimer.Start();
         }
 
@@ -154,8 +157,39 @@ namespace Monitoring_net9
 
             settingsWindow.Owner = this;
             settingsWindow.Topmost = true;
-            settingsWindow.ShowDialog();
-            settings = SettingsService.Load();
+            bool? result = settingsWindow.ShowDialog();
+
+            if (result == true)
+            {
+                settings = SettingsService.Load();
+                viewModel.ApplySettings(settings);
+                MoveToMonitoringScreen();
+            }
+        }
+
+        private async void HwInfoRestartTimer_Tick(
+            object? sender,
+            EventArgs e)
+        {
+            if (isRestartingHwInfo)
+            {
+                return;
+            }
+
+            isRestartingHwInfo = true;
+
+            try
+            {
+                await monitoringManager.RestartHwInfoAsync();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"HWiNFO restart error: {ex.Message}");
+            }
+            finally
+            {
+                isRestartingHwInfo = false;
+            }
         }
 
         protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
@@ -185,10 +219,7 @@ namespace Monitoring_net9
 
         private void Timer_Tick(object? sender, EventArgs e)
         {
-            TimeText.Text = DateTime.Now.ToString("HH:mm:ss");
-            DateText.Text = DateTime.Now.ToString(
-                "dddd dd MMMM yyyy",
-                new CultureInfo("fr-FR"));
+            viewModel.UpdateClock(DateTime.Now);
 
             try
             {
@@ -199,62 +230,7 @@ namespace Monitoring_net9
                 LoggerService.Log($"Update Screen Error: {ex.Message}");
             }
 
-            UpdateCpuUi();
-            UpdateGpuUi();
-        }
-
-        private void UpdateCpuUi()
-        {
-            CpuUsageText.Text = $"{monitoringManager.Data.CpuUsage:F1}";
-            CpuTempText.Text = $"{monitoringManager.Data.CpuTemperature:F1}";
-            CpuTempText.Foreground =
-                GetTemperatureBrush(monitoringManager.Data.CpuTemperature, 70, 90);
-            CpuClockText.Text = $"{monitoringManager.Data.CpuClock / 1000:F2}";
-            CpuPowerText.Text = $"{monitoringManager.Data.CpuPower:F1}";
-            CpuTensionText.Text = $"{monitoringManager.Data.CpuTension:F3}";
-            RamUsageText.Text = $"{monitoringManager.Data.RamUsed:F1}";
-        }
-
-        private void UpdateGpuUi()
-        {
-            GpuUsageText.Text = $"{monitoringManager.Data.GpuUsage:F1}";
-            GpuTempText.Text = $"{monitoringManager.Data.GpuTemperature:F0}";
-            GpuTempText.Foreground =
-                GetTemperatureBrush(monitoringManager.Data.GpuTemperature, 80, 95);
-            GpuMemoryText.Text = $"{monitoringManager.Data.GpuMemoryUsedGB:F1}";
-            GpuClockText.Text = $"{monitoringManager.Data.GpuClock:F0}";
-            GpuHotspotText.Text = $"{monitoringManager.Data.GpuHotspot:F1}";
-            GpuMemoryJunctionText.Text =
-                $"{monitoringManager.Data.GpuMemoryJunction:F0}";
-            GpuPowerText.Text = $"{monitoringManager.Data.GpuPower:F1}";
-
-            if (monitoringManager.Data.GpuTension >= 1)
-            {
-                GpuTensionText.Text = $"{monitoringManager.Data.GpuTension:F3}";
-                GpuTensionUnitText.Text = "V";
-                return;
-            }
-
-            GpuTensionText.Text = $"{monitoringManager.Data.GpuTension * 1000:F0}";
-            GpuTensionUnitText.Text = "mV";
-        }
-
-        private static System.Windows.Media.Brush GetTemperatureBrush(
-            double temperature,
-            double warningThreshold,
-            double dangerThreshold)
-        {
-            if (temperature > dangerThreshold)
-            {
-                return System.Windows.Media.Brushes.Red;
-            }
-
-            if (temperature > warningThreshold)
-            {
-                return System.Windows.Media.Brushes.Orange;
-            }
-
-            return System.Windows.Media.Brushes.White;
+            viewModel.UpdateSensors(monitoringManager.Data);
         }
     }
 }
