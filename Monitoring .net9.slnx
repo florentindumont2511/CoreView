@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Monitoring .net9/CoreView.csproj" />
+  <Project Path="Monitoring .net9.Tests/CoreView.Tests.csproj" />
 </Solution>

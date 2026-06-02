@@ -6,13 +6,13 @@
         xmlns:local="clr-namespace:Monitoring_net9"
         mc:Ignorable="d"
         Title="Options"
-        Height="500"
-        Width="700"
+        Height="760"
+        Width="760"
         Background="#181818"
         WindowStartupLocation="CenterOwner">
 
-    <Grid Margin="20">
-        <StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
 
             <TextBlock Text="Options CoreView"
                        FontSize="28"
@@ -20,39 +20,140 @@
                        Foreground="White"
                        Margin="0,0,0,20"/>
 
-            <TextBlock Text="Sélectionner l'écran"
-                       FontSize="20"
+            <TextBlock Text="S&#233;lectionner l'&#233;cran"
+                       FontSize="18"
                        FontWeight="Bold"
                        Foreground="White"
-                       Margin="0,0,0,20"
-                       Width="360"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center"/>
+                       Margin="0,0,0,8"/>
 
             <ComboBox x:Name="ScreenComboBox"
-                      Width="300"
-                      Height="40"
-                      FontSize="18"/>
+                      Width="320"
+                      Height="38"
+                      FontSize="16"
+                      HorizontalAlignment="Left"
+                      Margin="0,0,0,18"/>
 
-            <Button Content="Sauvegarder"
-                    Width="200"
-                    Height="50"
-                    Click="SaveButton_Click"/>
+            <TextBlock Text="Chemin HWiNFO"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,8"/>
+
+            <TextBox x:Name="HwInfoPathTextBox"
+                     Width="680"
+                     Height="36"
+                     FontSize="15"
+                     HorizontalAlignment="Left"
+                     Margin="0,0,0,18"/>
+
+            <TextBlock Text="Apparence"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,8"/>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,18">
+                <ComboBox x:Name="ThemeComboBox"
+                          Width="170"
+                          Height="36"
+                          FontSize="15"
+                          Margin="0,0,20,0">
+                    <ComboBoxItem Content="Dark"/>
+                    <ComboBoxItem Content="Contrast"/>
+                </ComboBox>
+
+                <TextBlock Text="Taille"
+                           Foreground="White"
+                           FontSize="16"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
+
+                <TextBox x:Name="DashboardScaleTextBox"
+                         Width="70"
+                         Height="36"
+                         FontSize="15"/>
+            </StackPanel>
+
+            <TextBlock Text="Seuils temp&#233;rature"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="CPU"
+                           Foreground="White"
+                           FontSize="16"
+                           VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1"
+                         x:Name="CpuWarningTextBox"
+                         Height="36"
+                         FontSize="15"
+                         Margin="0,0,8,0"/>
+                <TextBox Grid.Column="2"
+                         x:Name="CpuDangerTextBox"
+                         Height="36"
+                         FontSize="15"
+                         Margin="0,0,20,0"/>
+                <TextBlock Grid.Column="3"
+                           Text="GPU"
+                           Foreground="White"
+                           FontSize="16"
+                           VerticalAlignment="Center"/>
+                <TextBox Grid.Column="4"
+                         x:Name="GpuWarningTextBox"
+                         Height="36"
+                         FontSize="15"
+                         Margin="0,0,8,0"/>
+                <TextBox Grid.Column="5"
+                         x:Name="GpuDangerTextBox"
+                         Height="36"
+                         FontSize="15"/>
+            </Grid>
+
+            <CheckBox x:Name="ShowAdvancedSensorsCheckBox"
+                      Content="Afficher les capteurs avanc&#233;s"
+                      Foreground="White"
+                      FontSize="17"
+                      Margin="0,0,0,10"/>
+
+            <CheckBox x:Name="ShowMiniGraphsCheckBox"
+                      Content="Afficher les mini-graphes"
+                      Foreground="White"
+                      FontSize="17"
+                      Margin="0,0,0,10"/>
 
             <CheckBox x:Name="StartupCheckBox"
-                      Content="Lancer au démarrage"
+                      Content="Lancer au d&#233;marrage"
                       Foreground="White"
-                      FontSize="18"
+                      FontSize="17"
                       Checked="StartupCheckBox_Checked"
                       Unchecked="StartupCheckBox_Unchecked"
                       Margin="0,0,0,10"/>
 
             <CheckBox x:Name="FullscreenCheckBox"
-                      Content="Mode plein écran"
+                      Content="Mode plein &#233;cran"
                       Foreground="White"
-                      FontSize="18"
-                      Margin="0,0,0,10"/>
+                      FontSize="17"
+                      Margin="0,0,0,22"/>
+
+            <Button Content="Sauvegarder"
+                    Width="200"
+                    Height="50"
+                    HorizontalAlignment="Left"
+                    Click="SaveButton_Click"/>
 
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Window>

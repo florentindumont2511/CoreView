@@ -7,7 +7,6 @@ namespace Monitoring_net9.Services
     public class MonitoringManager : IDisposable
     {
         private const string HwInfoProcessName = "HWiNFO64";
-        private const string HwInfoPath = @"C:\Program Files\HWiNFO64\HWiNFO64.EXE";
 
         private readonly HardwareMonitorService hardwareMonitorService;
         private readonly HwInfoService hwInfoService;
@@ -28,20 +27,22 @@ namespace Monitoring_net9.Services
 
         public void StartHwInfo()
         {
+            string hwInfoPath = SettingsService.Load().HwInfoPath;
+
             if (Process.GetProcessesByName(HwInfoProcessName).Length > 0)
             {
                 return;
             }
 
-            if (!File.Exists(HwInfoPath))
+            if (!File.Exists(hwInfoPath))
             {
-                LoggerService.Log("HWiNFO executable not found");
+                LoggerService.Log($"HWiNFO executable not found: {hwInfoPath}");
                 return;
             }
 
             Process.Start(new ProcessStartInfo
             {
-                FileName = HwInfoPath,
+                FileName = hwInfoPath,
                 UseShellExecute = true,
                 Verb = "runas"
             });
@@ -49,7 +50,7 @@ namespace Monitoring_net9.Services
             LoggerService.Log("HWiNFO started");
         }
 
-        public void RestartHwInfo()
+        public async Task RestartHwInfoAsync()
         {
             hwInfoService.Disconnect();
 
@@ -66,9 +67,9 @@ namespace Monitoring_net9.Services
                 }
             }
 
-            Thread.Sleep(2000);
+            await Task.Delay(TimeSpan.FromSeconds(2));
             StartHwInfo();
-            Thread.Sleep(5000);
+            await Task.Delay(TimeSpan.FromSeconds(5));
             ConnectHwInfo();
         }
 
