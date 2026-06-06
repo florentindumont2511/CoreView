@@ -1,3 +1,4 @@
+
 CoreView
 
 CoreView est un logiciel de monitoring système développé en C# / WPF (.NET 9), conçu pour être affiché sur un écran secondaire dédié (comme un écran HDMI 5" ou 7" intégré au setup PC).
@@ -88,7 +89,7 @@ ou un écran secondaire dédié
 Le choix de l’écran est sauvegardé automatiquement.
 
 Capture d'écran :
-<img width="1888" height="1056" alt="image" src="https://github.com/user-attachments/assets/11e6acf3-2d85-4f4f-8c55-36756ba562af" />
+<img width="1900" height="1062" alt="image" src="https://github.com/user-attachments/assets/2ea39c32-0482-4333-a695-76711ca196c7" />
 
 
 
