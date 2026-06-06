@@ -13,6 +13,9 @@ namespace Monitoring_net9.Services
 
         public SensorData Data { get; } = new();
 
+        public bool IsHwInfoConnected =>
+            hwInfoService.IsConnected;
+
         public MonitoringManager()
         {
             hardwareMonitorService = new HardwareMonitorService();
@@ -40,14 +43,21 @@ namespace Monitoring_net9.Services
                 return;
             }
 
-            Process.Start(new ProcessStartInfo
+            try
             {
-                FileName = hwInfoPath,
-                UseShellExecute = true,
-                Verb = "runas"
-            });
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = hwInfoPath,
+                    UseShellExecute = true,
+                    Verb = "runas"
+                });
 
-            LoggerService.Log("HWiNFO started");
+                LoggerService.Log("HWiNFO started");
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"HWiNFO start error: {ex.Message}");
+            }
         }
 
         public async Task RestartHwInfoAsync()

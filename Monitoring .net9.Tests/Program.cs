@@ -8,7 +8,9 @@ var tests = new List<(string Name, Action Test)>
     ("formats missing advanced sensors as placeholders", FormatsMissingAdvancedSensorsAsPlaceholders),
     ("formats gpu voltage unit from volts", FormatsGpuVoltageUnitFromVolts),
     ("applies visibility and theme settings", AppliesVisibilityAndThemeSettings),
-    ("records bounded history points", RecordsBoundedHistoryPoints)
+    ("records bounded history points", RecordsBoundedHistoryPoints),
+    ("uses configured history duration", UsesConfiguredHistoryDuration),
+    ("updates hwinfo status text", UpdatesHwInfoStatusText)
 };
 
 foreach ((string name, Action test) in tests)
@@ -99,6 +101,42 @@ static void RecordsBoundedHistoryPoints()
 
     AssertEqual(60, viewModel.CpuUsageHistoryPoints.Count);
     AssertEqual(60, viewModel.GpuTemperatureHistoryPoints.Count);
+    AssertTrue(viewModel.CpuUsageAreaPoints.Count > viewModel.CpuUsageHistoryPoints.Count);
+}
+
+static void UsesConfiguredHistoryDuration()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.ApplySettings(
+        new AppSettings
+        {
+            HistoryDurationSeconds = 30
+        });
+
+    for (int i = 0; i < 75; i++)
+    {
+        viewModel.UpdateSensors(
+            new SensorData
+            {
+                CpuUsage = i,
+                GpuUsage = i
+            });
+    }
+
+    AssertEqual("30s", viewModel.HistoryDurationLabel);
+    AssertEqual(30, viewModel.CpuUsageHistoryPoints.Count);
+}
+
+static void UpdatesHwInfoStatusText()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateHwInfoStatus(true);
+    AssertEqual("HWiNFO connecté", viewModel.HwInfoStatus);
+
+    viewModel.UpdateHwInfoStatus(false);
+    AssertEqual("HWiNFO déconnecté", viewModel.HwInfoStatus);
 }
 
 static void AssertEqual<T>(
@@ -109,5 +147,13 @@ static void AssertEqual<T>(
     {
         throw new InvalidOperationException(
             $"Expected '{expected}', got '{actual}'.");
+    }
+}
+
+static void AssertTrue(bool condition)
+{
+    if (!condition)
+    {
+        throw new InvalidOperationException("Expected condition to be true.");
     }
 }

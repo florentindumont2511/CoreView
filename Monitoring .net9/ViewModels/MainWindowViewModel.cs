@@ -32,19 +32,27 @@ namespace Monitoring_net9.ViewModels
         private string gpuPower = "--";
         private string gpuTension = "--";
         private string gpuTensionUnit = string.Empty;
+        private string historyDurationLabel = "60s";
+        private string hwInfoStatus = "HWiNFO inconnu";
+        private string cpuTemperatureAxisLabel = "90°C";
+        private string gpuTemperatureAxisLabel = "95°C";
         private double dashboardScale = 1.0;
         private double cpuWarningTemperature = 70;
         private double cpuDangerTemperature = 90;
         private double gpuWarningTemperature = 80;
         private double gpuDangerTemperature = 95;
+        private int historyDurationSeconds = 60;
         private Visibility advancedSensorsVisibility = Visibility.Visible;
         private Visibility miniGraphsVisibility = Visibility.Visible;
         private PointCollection cpuUsageHistoryPoints = [];
+        private PointCollection cpuUsageAreaPoints = [];
         private PointCollection cpuTemperatureHistoryPoints = [];
         private PointCollection gpuUsageHistoryPoints = [];
+        private PointCollection gpuUsageAreaPoints = [];
         private PointCollection gpuTemperatureHistoryPoints = [];
         private MediaBrush cpuTemperatureBrush = MediaBrushes.White;
         private MediaBrush gpuTemperatureBrush = MediaBrushes.White;
+        private MediaBrush hwInfoStatusBrush = BrushFromRgb(170, 170, 170);
         private MediaBrush dashboardBrush =
             BrushFromRgb(21, 21, 21);
         private MediaBrush tileBrush =
@@ -58,6 +66,10 @@ namespace Monitoring_net9.ViewModels
             BrushFromRgb(192, 192, 192);
         private MediaBrush chartLineBrush =
             BrushFromRgb(70, 190, 155);
+        private MediaBrush chartAreaBrush =
+            BrushFromArgb(64, 70, 190, 155);
+        private MediaBrush chartGridBrush =
+            BrushFromArgb(55, 255, 255, 255);
 
         private readonly Queue<double> cpuUsageHistory = new();
         private readonly Queue<double> cpuTemperatureHistory = new();
@@ -168,6 +180,30 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref gpuTensionUnit, value);
         }
 
+        public string HistoryDurationLabel
+        {
+            get => historyDurationLabel;
+            private set => SetProperty(ref historyDurationLabel, value);
+        }
+
+        public string HwInfoStatus
+        {
+            get => hwInfoStatus;
+            private set => SetProperty(ref hwInfoStatus, value);
+        }
+
+        public string CpuTemperatureAxisLabel
+        {
+            get => cpuTemperatureAxisLabel;
+            private set => SetProperty(ref cpuTemperatureAxisLabel, value);
+        }
+
+        public string GpuTemperatureAxisLabel
+        {
+            get => gpuTemperatureAxisLabel;
+            private set => SetProperty(ref gpuTemperatureAxisLabel, value);
+        }
+
         public MediaBrush CpuTemperatureBrush
         {
             get => cpuTemperatureBrush;
@@ -178,6 +214,12 @@ namespace Monitoring_net9.ViewModels
         {
             get => gpuTemperatureBrush;
             private set => SetProperty(ref gpuTemperatureBrush, value);
+        }
+
+        public MediaBrush HwInfoStatusBrush
+        {
+            get => hwInfoStatusBrush;
+            private set => SetProperty(ref hwInfoStatusBrush, value);
         }
 
         public double DashboardScale
@@ -204,6 +246,12 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref cpuUsageHistoryPoints, value);
         }
 
+        public PointCollection CpuUsageAreaPoints
+        {
+            get => cpuUsageAreaPoints;
+            private set => SetProperty(ref cpuUsageAreaPoints, value);
+        }
+
         public PointCollection CpuTemperatureHistoryPoints
         {
             get => cpuTemperatureHistoryPoints;
@@ -214,6 +262,12 @@ namespace Monitoring_net9.ViewModels
         {
             get => gpuUsageHistoryPoints;
             private set => SetProperty(ref gpuUsageHistoryPoints, value);
+        }
+
+        public PointCollection GpuUsageAreaPoints
+        {
+            get => gpuUsageAreaPoints;
+            private set => SetProperty(ref gpuUsageAreaPoints, value);
         }
 
         public PointCollection GpuTemperatureHistoryPoints
@@ -264,12 +318,34 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref chartLineBrush, value);
         }
 
+        public MediaBrush ChartAreaBrush
+        {
+            get => chartAreaBrush;
+            private set => SetProperty(ref chartAreaBrush, value);
+        }
+
+        public MediaBrush ChartGridBrush
+        {
+            get => chartGridBrush;
+            private set => SetProperty(ref chartGridBrush, value);
+        }
+
         public void ApplySettings(AppSettings settings)
         {
             cpuWarningTemperature = settings.CpuWarningTemperature;
             cpuDangerTemperature = settings.CpuDangerTemperature;
             gpuWarningTemperature = settings.GpuWarningTemperature;
             gpuDangerTemperature = settings.GpuDangerTemperature;
+            historyDurationSeconds =
+                Math.Clamp(settings.HistoryDurationSeconds, 30, 300);
+            HistoryDurationLabel =
+                historyDurationSeconds < 60
+                    ? $"{historyDurationSeconds}s"
+                    : $"{historyDurationSeconds / 60}min";
+            CpuTemperatureAxisLabel =
+                $"{cpuDangerTemperature:F0}°C";
+            GpuTemperatureAxisLabel =
+                $"{gpuDangerTemperature:F0}°C";
 
             DashboardScale = Math.Clamp(settings.DashboardScale, 0.75, 1.35);
             AdvancedSensorsVisibility =
@@ -284,6 +360,19 @@ namespace Monitoring_net9.ViewModels
         {
             CurrentTime = now.ToString("HH:mm:ss");
             CurrentDate = now.ToString("dddd dd MMMM yyyy", FrenchCulture);
+        }
+
+        public void UpdateHwInfoStatus(bool isConnected)
+        {
+            if (isConnected)
+            {
+                HwInfoStatus = "HWiNFO connecté";
+                HwInfoStatusBrush = BrushFromRgb(70, 190, 155);
+                return;
+            }
+
+            HwInfoStatus = "HWiNFO déconnecté";
+            HwInfoStatusBrush = MediaBrushes.Orange;
         }
 
         public void UpdateSensors(SensorData data)
@@ -385,22 +474,26 @@ namespace Monitoring_net9.ViewModels
             AddHistoryValue(gpuTemperatureHistory, data.GpuTemperature);
 
             CpuUsageHistoryPoints =
-                CreatePoints(cpuUsageHistory, 100);
+                CreateUsagePoints(cpuUsageHistory);
+            CpuUsageAreaPoints =
+                CreateAreaPoints(CpuUsageHistoryPoints);
             CpuTemperatureHistoryPoints =
                 CreatePoints(cpuTemperatureHistory, cpuDangerTemperature);
             GpuUsageHistoryPoints =
-                CreatePoints(gpuUsageHistory, 100);
+                CreateUsagePoints(gpuUsageHistory);
+            GpuUsageAreaPoints =
+                CreateAreaPoints(GpuUsageHistoryPoints);
             GpuTemperatureHistoryPoints =
                 CreatePoints(gpuTemperatureHistory, gpuDangerTemperature);
         }
 
-        private static void AddHistoryValue(
+        private void AddHistoryValue(
             Queue<double> history,
             double value)
         {
             history.Enqueue(Math.Max(0, value));
 
-            while (history.Count > 60)
+            while (history.Count > historyDurationSeconds)
             {
                 history.Dequeue();
             }
@@ -410,8 +503,8 @@ namespace Monitoring_net9.ViewModels
             IReadOnlyCollection<double> values,
             double maxValue)
         {
-            const double width = 180;
-            const double height = 48;
+            const double width = 320;
+            const double height = 170;
 
             var points = new PointCollection();
 
@@ -442,6 +535,41 @@ namespace Monitoring_net9.ViewModels
             return points;
         }
 
+        private static PointCollection CreateUsagePoints(
+            IReadOnlyCollection<double> values)
+        {
+            double maxValue =
+                Math.Max(25, values.Count == 0 ? 100 : values.Max());
+
+            return CreatePoints(values, maxValue);
+        }
+
+        private static PointCollection CreateAreaPoints(
+            PointCollection linePoints)
+        {
+            const double height = 170;
+
+            var points = new PointCollection();
+
+            if (linePoints.Count == 0)
+            {
+                return points;
+            }
+
+            points.Add(
+                new WpfPoint(linePoints[0].X, height));
+
+            foreach (WpfPoint point in linePoints)
+            {
+                points.Add(point);
+            }
+
+            points.Add(
+                new WpfPoint(linePoints[^1].X, height));
+
+            return points;
+        }
+
         private void ApplyTheme(string theme)
         {
             if (string.Equals(theme, "Contrast", StringComparison.OrdinalIgnoreCase))
@@ -453,6 +581,8 @@ namespace Monitoring_net9.ViewModels
                 TitleBrush = MediaBrushes.White;
                 UnitBrush = BrushFromRgb(230, 230, 230);
                 ChartLineBrush = BrushFromRgb(255, 210, 72);
+                ChartAreaBrush = BrushFromArgb(72, 255, 210, 72);
+                ChartGridBrush = BrushFromArgb(75, 255, 255, 255);
                 return;
             }
 
@@ -463,6 +593,8 @@ namespace Monitoring_net9.ViewModels
             TitleBrush = BrushFromRgb(168, 168, 168);
             UnitBrush = BrushFromRgb(192, 192, 192);
             ChartLineBrush = BrushFromRgb(70, 190, 155);
+            ChartAreaBrush = BrushFromArgb(64, 70, 190, 155);
+            ChartGridBrush = BrushFromArgb(55, 255, 255, 255);
         }
 
         private static MediaBrush BrushFromRgb(
@@ -472,6 +604,20 @@ namespace Monitoring_net9.ViewModels
         {
             var brush =
                 new SolidColorBrush(MediaColor.FromRgb(red, green, blue));
+
+            brush.Freeze();
+
+            return brush;
+        }
+
+        private static MediaBrush BrushFromArgb(
+            byte alpha,
+            byte red,
+            byte green,
+            byte blue)
+        {
+            var brush =
+                new SolidColorBrush(MediaColor.FromArgb(alpha, red, green, blue));
 
             brush.Freeze();
 

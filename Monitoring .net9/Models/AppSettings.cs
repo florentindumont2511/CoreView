@@ -24,5 +24,7 @@ namespace Monitoring_net9.Models
         public bool ShowAdvancedSensors { get; set; } = true;
 
         public bool ShowMiniGraphs { get; set; } = true;
+
+        public int HistoryDurationSeconds { get; set; } = 60;
     }
 }

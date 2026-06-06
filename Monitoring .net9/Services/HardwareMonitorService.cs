@@ -6,6 +6,7 @@ namespace Monitoring_net9.Services
     public class HardwareMonitorService : IDisposable
     {
         private readonly Computer computer;
+        private bool isOpen;
 
         public SensorData Data { get; } = new();
 
@@ -18,11 +19,24 @@ namespace Monitoring_net9.Services
                 IsGpuEnabled = true
             };
 
-            computer.Open();
+            try
+            {
+                computer.Open();
+                isOpen = true;
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Hardware monitor open error: {ex.Message}");
+            }
         }
 
         public void Update()
         {
+            if (!isOpen)
+            {
+                return;
+            }
+
             foreach (var hardware in computer.Hardware)
             {
                 UpdateHardware(hardware);
@@ -36,6 +50,11 @@ namespace Monitoring_net9.Services
 
         public void Dispose()
         {
+            if (!isOpen)
+            {
+                return;
+            }
+
             computer.Close();
         }
 

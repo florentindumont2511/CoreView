@@ -3,6 +3,7 @@ using Monitoring_net9.Models;
 using Monitoring_net9.Services;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using WpfComboBoxItem = System.Windows.Controls.ComboBoxItem;
 using WpfTextBox = System.Windows.Controls.TextBox;
@@ -77,6 +78,8 @@ namespace Monitoring_net9
                 settings.ShowAdvancedSensors;
             ShowMiniGraphsCheckBox.IsChecked =
                 settings.ShowMiniGraphs;
+
+            SelectHistoryDuration(settings.HistoryDurationSeconds);
         }
 
         private void SaveButton_Click(
@@ -119,6 +122,8 @@ namespace Monitoring_net9
                 ShowAdvancedSensorsCheckBox.IsChecked == true;
             settings.ShowMiniGraphs =
                 ShowMiniGraphsCheckBox.IsChecked == true;
+            settings.HistoryDurationSeconds =
+                ReadHistoryDuration();
 
             NormalizeThresholds(settings);
 
@@ -129,6 +134,86 @@ namespace Monitoring_net9
 
             DialogResult = true;
             Close();
+        }
+
+        private void ResetButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            ApplySettingsToControls(new AppSettings());
+        }
+
+        private void ApplySettingsToControls(AppSettings settings)
+        {
+            ScreenComboBox.SelectedItem =
+                ScreenComboBox.Items.Contains(settings.SelectedScreen)
+                    ? settings.SelectedScreen
+                    : ScreenComboBox.Items.Count > 0
+                        ? ScreenComboBox.Items[0]
+                        : null;
+
+            FullscreenCheckBox.IsChecked =
+                settings.Fullscreen;
+
+            HwInfoPathTextBox.Text =
+                settings.HwInfoPath;
+
+            ThemeComboBox.SelectedItem =
+                ThemeComboBox.Items
+                    .OfType<WpfComboBoxItem>()
+                    .FirstOrDefault(
+                        item => item.Content?.ToString() == settings.Theme)
+                ?? ThemeComboBox.Items[0];
+
+            DashboardScaleTextBox.Text =
+                settings.DashboardScale.ToString(
+                    "F2",
+                    CultureInfo.InvariantCulture);
+
+            CpuWarningTextBox.Text =
+                settings.CpuWarningTemperature.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
+            CpuDangerTextBox.Text =
+                settings.CpuDangerTemperature.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
+            GpuWarningTextBox.Text =
+                settings.GpuWarningTemperature.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
+            GpuDangerTextBox.Text =
+                settings.GpuDangerTemperature.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
+
+            ShowAdvancedSensorsCheckBox.IsChecked =
+                settings.ShowAdvancedSensors;
+            ShowMiniGraphsCheckBox.IsChecked =
+                settings.ShowMiniGraphs;
+            SelectHistoryDuration(settings.HistoryDurationSeconds);
+        }
+
+        private int ReadHistoryDuration()
+        {
+            if (HistoryDurationComboBox.SelectedItem is WpfComboBoxItem item &&
+                int.TryParse(item.Tag?.ToString(), out int seconds))
+            {
+                return seconds;
+            }
+
+            return new AppSettings().HistoryDurationSeconds;
+        }
+
+        private void SelectHistoryDuration(int seconds)
+        {
+            HistoryDurationComboBox.SelectedItem =
+                HistoryDurationComboBox.Items
+                    .OfType<WpfComboBoxItem>()
+                    .FirstOrDefault(
+                        item => item.Tag?.ToString() == seconds.ToString(
+                            CultureInfo.InvariantCulture))
+                ?? HistoryDurationComboBox.Items[1];
         }
 
         private static double ReadDouble(
@@ -171,6 +256,44 @@ namespace Monitoring_net9
             {
                 settings.GpuDangerTemperature =
                     settings.GpuWarningTemperature + 1;
+            }
+        }
+
+        private void BrowseHwInfoButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "S\u00e9lectionner HWiNFO",
+                Filter = "Applications (*.exe)|*.exe|Tous les fichiers (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (File.Exists(HwInfoPathTextBox.Text))
+            {
+                dialog.InitialDirectory =
+                    Path.GetDirectoryName(HwInfoPathTextBox.Text);
+                dialog.FileName =
+                    Path.GetFileName(HwInfoPathTextBox.Text);
+            }
+            else
+            {
+                string defaultDirectory =
+                    Path.GetDirectoryName(new AppSettings().HwInfoPath)
+                    ?? Environment.GetFolderPath(
+                        Environment.SpecialFolder.ProgramFiles);
+
+                if (Directory.Exists(defaultDirectory))
+                {
+                    dialog.InitialDirectory = defaultDirectory;
+                }
+            }
+
+            if (dialog.ShowDialog(this) == true)
+            {
+                HwInfoPathTextBox.Text = dialog.FileName;
             }
         }
 

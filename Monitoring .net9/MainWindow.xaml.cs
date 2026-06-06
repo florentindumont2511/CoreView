@@ -59,12 +59,22 @@ namespace Monitoring_net9
 
         private TaskbarIcon CreateTrayIcon()
         {
+            string iconPath =
+                System.IO.Path.Combine(
+                    AppContext.BaseDirectory,
+                    "Assets",
+                    "monitoring.ico");
+
             var icon = new TaskbarIcon
             {
-                Icon = new System.Drawing.Icon("Assets/monitoring.ico"),
                 ToolTipText = "Monitoring Dashboard",
                 ContextMenu = new ContextMenu()
             };
+
+            if (System.IO.File.Exists(iconPath))
+            {
+                icon.Icon = new System.Drawing.Icon(iconPath);
+            }
 
             var settingsItem = new MenuItem
             {
@@ -230,6 +240,7 @@ namespace Monitoring_net9
                 LoggerService.Log($"Update Screen Error: {ex.Message}");
             }
 
+            viewModel.UpdateHwInfoStatus(monitoringManager.IsHwInfoConnected);
             viewModel.UpdateSensors(monitoringManager.Data);
         }
     }
