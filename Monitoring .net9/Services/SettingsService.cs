@@ -6,20 +6,31 @@ namespace Monitoring_net9.Services
 {
     public static class SettingsService
     {
-        private static readonly string filePath =
+        private static readonly string SettingsDirectory =
+            Path.Combine(
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.ApplicationData),
+                "CoreView");
+
+        private static readonly string FilePath =
+            Path.Combine(SettingsDirectory, "settings.json");
+
+        private static readonly string LegacyFilePath =
             "settings.json";
 
         public static AppSettings Load()
         {
             try
             {
-                if (!File.Exists(filePath))
+                MigrateLegacySettings();
+
+                if (!File.Exists(FilePath))
                 {
                     return new AppSettings();
                 }
 
                 string json =
-                    File.ReadAllText(filePath);
+                    File.ReadAllText(FilePath);
 
                 return JsonSerializer.Deserialize<AppSettings>(json)
                        ?? new AppSettings();
@@ -33,6 +44,8 @@ namespace Monitoring_net9.Services
         public static void Save(
             AppSettings settings)
         {
+            Directory.CreateDirectory(SettingsDirectory);
+
             string json =
                 JsonSerializer.Serialize(
                     settings,
@@ -41,7 +54,18 @@ namespace Monitoring_net9.Services
                         WriteIndented = true
                     });
 
-            File.WriteAllText(filePath, json);
+            File.WriteAllText(FilePath, json);
+        }
+
+        private static void MigrateLegacySettings()
+        {
+            if (File.Exists(FilePath) || !File.Exists(LegacyFilePath))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(SettingsDirectory);
+            File.Copy(LegacyFilePath, FilePath);
         }
     }
 }

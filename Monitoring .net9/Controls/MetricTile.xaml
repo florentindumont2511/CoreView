@@ -4,31 +4,36 @@
              x:Name="Root">
 
     <Border Background="{Binding TileBrush, ElementName=Root}"
-            CornerRadius="20"
-            Padding="5">
+            CornerRadius="14"
+            Padding="8">
 
-        <StackPanel>
+        <Grid VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
             <TextBlock Text="{Binding Title, ElementName=Root}"
                        Foreground="{Binding TitleBrush, ElementName=Root}"
-                       FontSize="55"/>
+                       FontSize="42"/>
 
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal">
 
                 <TextBlock Text="{Binding Value, ElementName=Root}"
                            Foreground="{Binding ValueBrush, ElementName=Root}"
-                           FontSize="90"
+                           FontSize="74"
                            FontWeight="Bold"/>
 
                 <TextBlock Text="{Binding Unit, ElementName=Root}"
                            Foreground="{Binding UnitBrush, ElementName=Root}"
-                           FontSize="60"
-                           Margin="25,0,0,7"
+                           FontSize="46"
+                           Margin="16,0,0,6"
                            VerticalAlignment="Bottom"/>
 
             </StackPanel>
 
-        </StackPanel>
+        </Grid>
 
     </Border>
 </UserControl>
