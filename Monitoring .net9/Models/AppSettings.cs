@@ -19,6 +19,8 @@ namespace Monitoring_net9.Models
 
         public double DashboardScale { get; set; } = 1.0;
 
+        public string DashboardScalePreset { get; set; } = "Custom";
+
         public string Theme { get; set; } = "Dark";
 
         public bool ShowAdvancedSensors { get; set; } = true;

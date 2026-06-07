@@ -13,6 +13,8 @@ namespace Monitoring_net9
 {
     public partial class SettingsWindow : Window
     {
+        private bool isUpdatingScaleControls;
+
         public SettingsWindow()
         {
             InitializeComponent();
@@ -52,6 +54,9 @@ namespace Monitoring_net9
                 settings.DashboardScale.ToString(
                     "F2",
                     CultureInfo.InvariantCulture);
+            SelectDashboardScalePreset(
+                settings.DashboardScalePreset,
+                settings.DashboardScale);
 
             CpuWarningTextBox.Text =
                 settings.CpuWarningTemperature.ToString(
@@ -105,6 +110,8 @@ namespace Monitoring_net9
                         ?.ToString()
                     ?? "Dark";
 
+                settings.DashboardScalePreset =
+                    ReadDashboardScalePreset();
                 settings.DashboardScale =
                     ReadDouble(DashboardScaleTextBox, settings.DashboardScale);
                 settings.CpuWarningTemperature =
@@ -174,6 +181,9 @@ namespace Monitoring_net9
                 settings.DashboardScale.ToString(
                     "F2",
                     CultureInfo.InvariantCulture);
+            SelectDashboardScalePreset(
+                settings.DashboardScalePreset,
+                settings.DashboardScale);
 
             CpuWarningTextBox.Text =
                 settings.CpuWarningTemperature.ToString(
@@ -208,6 +218,133 @@ namespace Monitoring_net9
             }
 
             return new AppSettings().HistoryDurationSeconds;
+        }
+
+        private string ReadDashboardScalePreset()
+        {
+            if (DashboardScalePresetComboBox.SelectedItem is WpfComboBoxItem item)
+            {
+                return item.Tag?.ToString() ?? "Custom";
+            }
+
+            return "Custom";
+        }
+
+        private void SelectDashboardScalePreset(
+            string preset,
+            double scale)
+        {
+            isUpdatingScaleControls = true;
+
+            try
+            {
+                string normalizedPreset =
+                    IsKnownScalePreset(preset)
+                        ? preset
+                        : InferScalePreset(scale);
+
+                DashboardScalePresetComboBox.SelectedItem =
+                    DashboardScalePresetComboBox.Items
+                        .OfType<WpfComboBoxItem>()
+                        .FirstOrDefault(
+                            item => item.Tag?.ToString() == normalizedPreset)
+                    ?? DashboardScalePresetComboBox.Items[3];
+            }
+            finally
+            {
+                isUpdatingScaleControls = false;
+            }
+        }
+
+        private void DashboardScalePresetComboBox_SelectionChanged(
+            object sender,
+            System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (isUpdatingScaleControls)
+            {
+                return;
+            }
+
+            string preset = ReadDashboardScalePreset();
+
+            if (!TryGetPresetScale(preset, out double scale))
+            {
+                return;
+            }
+
+            isUpdatingScaleControls = true;
+
+            try
+            {
+                DashboardScaleTextBox.Text =
+                    scale.ToString("F2", CultureInfo.InvariantCulture);
+            }
+            finally
+            {
+                isUpdatingScaleControls = false;
+            }
+        }
+
+        private void DashboardScaleTextBox_TextChanged(
+            object sender,
+            System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (isUpdatingScaleControls)
+            {
+                return;
+            }
+
+            double scale =
+                ReadDouble(DashboardScaleTextBox, new AppSettings().DashboardScale);
+
+            SelectDashboardScalePreset(
+                InferScalePreset(scale),
+                scale);
+        }
+
+        private static bool TryGetPresetScale(
+            string preset,
+            out double scale)
+        {
+            scale = preset switch
+            {
+                "Small" => 0.85,
+                "Medium" => 1.0,
+                "Large" => 1.15,
+                _ => double.NaN
+            };
+
+            return IsFinite(scale);
+        }
+
+        private static string InferScalePreset(double scale)
+        {
+            if (!IsFinite(scale))
+            {
+                return "Custom";
+            }
+
+            if (Math.Abs(scale - 0.85) < 0.01)
+            {
+                return "Small";
+            }
+
+            if (Math.Abs(scale - 1.0) < 0.01)
+            {
+                return "Medium";
+            }
+
+            if (Math.Abs(scale - 1.15) < 0.01)
+            {
+                return "Large";
+            }
+
+            return "Custom";
+        }
+
+        private static bool IsKnownScalePreset(string preset)
+        {
+            return preset is "Small" or "Medium" or "Large" or "Custom";
         }
 
         private void SelectHistoryDuration(int seconds)

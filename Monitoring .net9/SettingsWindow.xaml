@@ -77,16 +77,29 @@
                     <ComboBoxItem Content="Contrast"/>
                 </ComboBox>
 
-                <TextBlock Text="Taille"
+                <TextBlock Text="Taille interface"
                            Foreground="White"
                            FontSize="22"
                            VerticalAlignment="Center"
                            Margin="0,0,14,0"/>
 
+                <ComboBox x:Name="DashboardScalePresetComboBox"
+                          Width="210"
+                          Height="48"
+                          FontSize="20"
+                          Margin="0,0,18,0"
+                          SelectionChanged="DashboardScalePresetComboBox_SelectionChanged">
+                    <ComboBoxItem Content="Petit" Tag="Small"/>
+                    <ComboBoxItem Content="Moyen" Tag="Medium"/>
+                    <ComboBoxItem Content="Grand" Tag="Large"/>
+                    <ComboBoxItem Content="Personnalis&#233;e" Tag="Custom"/>
+                </ComboBox>
+
                 <TextBox x:Name="DashboardScaleTextBox"
                          Width="90"
                          Height="48"
                          FontSize="20"
+                         TextChanged="DashboardScaleTextBox_TextChanged"
                          VerticalContentAlignment="Center"/>
             </StackPanel>
 
