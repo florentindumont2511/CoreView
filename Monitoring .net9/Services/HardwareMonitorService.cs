@@ -123,11 +123,27 @@ namespace Monitoring_net9.Services
 
         private void UpdateHardware(IHardware hardware)
         {
+            UpdateHardwareName(hardware);
             hardware.Update();
 
             foreach (var sensor in hardware.Sensors.ToArray())
             {
                 ReadSensor(hardware.HardwareType, sensor);
+            }
+        }
+
+        private void UpdateHardwareName(IHardware hardware)
+        {
+            if (hardware.HardwareType == HardwareType.Cpu &&
+                string.IsNullOrWhiteSpace(Data.CpuName))
+            {
+                Data.CpuName = hardware.Name;
+            }
+            else if ((hardware.HardwareType == HardwareType.GpuNvidia ||
+                      hardware.HardwareType == HardwareType.GpuAmd) &&
+                     string.IsNullOrWhiteSpace(Data.GpuName))
+            {
+                Data.GpuName = hardware.Name;
             }
         }
 
@@ -175,6 +191,31 @@ namespace Monitoring_net9.Services
             {
                 Data.RamUsed = sensor.Value ?? 0;
             }
+
+            if (sensor.SensorType == SensorType.Load &&
+                sensor.Name.Contains("Memory"))
+            {
+                Data.RamUsagePercent = sensor.Value ?? 0;
+            }
+
+            if ((sensor.SensorType == SensorType.Data ||
+                 sensor.SensorType == SensorType.SmallData) &&
+                sensor.Name.Contains("Memory Available"))
+            {
+                double available = sensor.Value ?? 0;
+
+                if (Data.RamUsed > 0 && available > 0)
+                {
+                    Data.RamTotal = Data.RamUsed + available;
+                }
+            }
+
+            if (Data.RamTotal <= 0 &&
+                Data.RamUsed > 0 &&
+                Data.RamUsagePercent > 0)
+            {
+                Data.RamTotal = Data.RamUsed / (Data.RamUsagePercent / 100);
+            }
         }
 
         private void ReadGpuSensor(ISensor sensor)
@@ -183,6 +224,12 @@ namespace Monitoring_net9.Services
                 sensor.Name == "GPU Core")
             {
                 Data.GpuUsage = sensor.Value ?? 0;
+            }
+
+            if (sensor.SensorType == SensorType.Load &&
+                sensor.Name.Contains("GPU Memory"))
+            {
+                Data.GpuMemoryUsagePercent = sensor.Value ?? 0;
             }
 
             if (sensor.SensorType == SensorType.Temperature)
@@ -195,6 +242,21 @@ namespace Monitoring_net9.Services
                 sensor.Name.Contains("GPU Memory Used"))
             {
                 Data.GpuMemoryUsedGB = (sensor.Value ?? 0) / 1024f;
+            }
+
+            if ((sensor.SensorType == SensorType.SmallData ||
+                 sensor.SensorType == SensorType.Data) &&
+                sensor.Name.Contains("GPU Memory Total"))
+            {
+                Data.GpuMemoryTotalGB = (sensor.Value ?? 0) / 1024f;
+            }
+
+            if (Data.GpuMemoryTotalGB <= 0 &&
+                Data.GpuMemoryUsedGB > 0 &&
+                Data.GpuMemoryUsagePercent > 0)
+            {
+                Data.GpuMemoryTotalGB =
+                    Data.GpuMemoryUsedGB / (Data.GpuMemoryUsagePercent / 100);
             }
         }
     }

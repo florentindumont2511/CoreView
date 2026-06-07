@@ -11,7 +11,10 @@ var tests = new List<(string Name, Action Test)>
     ("records bounded history points", RecordsBoundedHistoryPoints),
     ("uses configured history duration", UsesConfiguredHistoryDuration),
     ("updates hwinfo status text", UpdatesHwInfoStatusText),
-    ("ignores invalid sensor values", IgnoresInvalidSensorValues)
+    ("ignores invalid sensor values", IgnoresInvalidSensorValues),
+    ("updates hardware names", UpdatesHardwareNames),
+    ("formats extended metrics", FormatsExtendedMetrics),
+    ("calculates vram usage percent from used and total", CalculatesVramUsagePercentFromUsedAndTotal)
 };
 
 foreach ((string name, Action test) in tests)
@@ -158,6 +161,61 @@ static void IgnoresInvalidSensorValues()
     AssertEqual("--", viewModel.GpuUsage);
     AssertEqual("--", viewModel.GpuTemperature);
     AssertEqual(1, viewModel.CpuUsageHistoryPoints.Count);
+}
+
+static void UpdatesHardwareNames()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            CpuName = "AMD Ryzen Test",
+            GpuName = "AMD Radeon Test"
+        });
+
+    AssertEqual("AMD Ryzen Test", viewModel.CpuName);
+    AssertEqual("AMD Radeon Test", viewModel.GpuName);
+}
+
+static void FormatsExtendedMetrics()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            RamTotal = 32,
+            RamUsagePercent = 67,
+            RamClock = 3200,
+            GpuMemoryTotalGB = 16,
+            GpuMemoryUsagePercent = 42,
+            Fps = 144,
+            TotalPower = 321.5
+        });
+
+    AssertEqual("32.0", viewModel.RamTotal);
+    AssertEqual("67", viewModel.RamUsagePercent);
+    AssertEqual("3200", viewModel.RamClock);
+    AssertEqual("16.0", viewModel.GpuMemoryTotal);
+    AssertEqual("42", viewModel.GpuMemoryUsagePercent);
+    AssertEqual("144", viewModel.Fps);
+    AssertEqual("321.5", viewModel.TotalPower);
+}
+
+static void CalculatesVramUsagePercentFromUsedAndTotal()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            GpuMemoryUsedGB = 4.7,
+            GpuMemoryTotalGB = 16,
+            GpuMemoryUsagePercent = 1
+        });
+
+    AssertEqual("29", viewModel.GpuMemoryUsagePercent);
 }
 
 static void AssertEqual<T>(

@@ -5,7 +5,7 @@
 
     <Border Background="{Binding TileBrush, ElementName=Root}"
             CornerRadius="14"
-            Padding="8">
+            Padding="6">
 
         <Grid VerticalAlignment="Center">
             <Grid.RowDefinitions>
@@ -15,20 +15,21 @@
 
             <TextBlock Text="{Binding Title, ElementName=Root}"
                        Foreground="{Binding TitleBrush, ElementName=Root}"
-                       FontSize="42"/>
+                       FontSize="30"
+                       TextTrimming="CharacterEllipsis"/>
 
             <StackPanel Grid.Row="1"
                         Orientation="Horizontal">
 
                 <TextBlock Text="{Binding Value, ElementName=Root}"
                            Foreground="{Binding ValueBrush, ElementName=Root}"
-                           FontSize="74"
+                           FontSize="52"
                            FontWeight="Bold"/>
 
                 <TextBlock Text="{Binding Unit, ElementName=Root}"
                            Foreground="{Binding UnitBrush, ElementName=Root}"
-                           FontSize="46"
-                           Margin="16,0,0,6"
+                           FontSize="32"
+                           Margin="10,0,0,4"
                            VerticalAlignment="Bottom"/>
 
             </StackPanel>

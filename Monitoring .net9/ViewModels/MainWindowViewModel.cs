@@ -17,21 +17,30 @@ namespace Monitoring_net9.ViewModels
 
         private string currentTime = string.Empty;
         private string currentDate = string.Empty;
+        private string cpuName = "CPU";
+        private string gpuName = "GPU";
         private string cpuUsage = "--";
         private string cpuTemperature = "--";
         private string cpuClock = "--";
         private string cpuPower = "--";
         private string cpuTension = "--";
         private string ramUsage = "--";
+        private string ramTotal = "--";
+        private string ramUsagePercent = "--";
+        private string ramClock = "--";
         private string gpuUsage = "--";
         private string gpuTemperature = "--";
         private string gpuMemory = "--";
+        private string gpuMemoryTotal = "--";
+        private string gpuMemoryUsagePercent = "--";
         private string gpuClock = "--";
         private string gpuHotspot = "--";
         private string gpuMemoryJunction = "--";
         private string gpuPower = "--";
         private string gpuTension = "--";
         private string gpuTensionUnit = string.Empty;
+        private string fps = "--";
+        private string totalPower = "--";
         private string historyDurationLabel = "60s";
         private string hwInfoStatus = "HWiNFO inconnu";
         private string cpuTemperatureAxisLabel = "90°C";
@@ -90,6 +99,18 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref currentDate, value);
         }
 
+        public string CpuName
+        {
+            get => cpuName;
+            private set => SetProperty(ref cpuName, value);
+        }
+
+        public string GpuName
+        {
+            get => gpuName;
+            private set => SetProperty(ref gpuName, value);
+        }
+
         public string CpuUsage
         {
             get => cpuUsage;
@@ -126,6 +147,24 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref ramUsage, value);
         }
 
+        public string RamTotal
+        {
+            get => ramTotal;
+            private set => SetProperty(ref ramTotal, value);
+        }
+
+        public string RamUsagePercent
+        {
+            get => ramUsagePercent;
+            private set => SetProperty(ref ramUsagePercent, value);
+        }
+
+        public string RamClock
+        {
+            get => ramClock;
+            private set => SetProperty(ref ramClock, value);
+        }
+
         public string GpuUsage
         {
             get => gpuUsage;
@@ -142,6 +181,18 @@ namespace Monitoring_net9.ViewModels
         {
             get => gpuMemory;
             private set => SetProperty(ref gpuMemory, value);
+        }
+
+        public string GpuMemoryTotal
+        {
+            get => gpuMemoryTotal;
+            private set => SetProperty(ref gpuMemoryTotal, value);
+        }
+
+        public string GpuMemoryUsagePercent
+        {
+            get => gpuMemoryUsagePercent;
+            private set => SetProperty(ref gpuMemoryUsagePercent, value);
         }
 
         public string GpuClock
@@ -178,6 +229,18 @@ namespace Monitoring_net9.ViewModels
         {
             get => gpuTensionUnit;
             private set => SetProperty(ref gpuTensionUnit, value);
+        }
+
+        public string Fps
+        {
+            get => fps;
+            private set => SetProperty(ref fps, value);
+        }
+
+        public string TotalPower
+        {
+            get => totalPower;
+            private set => SetProperty(ref totalPower, value);
         }
 
         public string HistoryDurationLabel
@@ -382,20 +445,35 @@ namespace Monitoring_net9.ViewModels
 
         public void UpdateSensors(SensorData data)
         {
+            CpuName = FormatHardwareName(data.CpuName, "CPU");
+            GpuName = FormatHardwareName(data.GpuName, "GPU");
             CpuUsage = FormatRequired(data.CpuUsage, "F1");
             CpuTemperature = FormatOptional(data.CpuTemperature, "F1");
             CpuClock = FormatOptional(data.CpuClock / 1000, "F2");
             CpuPower = FormatOptional(data.CpuPower, "F1");
             CpuTension = FormatOptional(data.CpuTension, "F3");
             RamUsage = FormatRequired(data.RamUsed, "F1");
+            RamTotal = FormatOptional(data.RamTotal, "F1");
+            RamUsagePercent = FormatOptional(data.RamUsagePercent, "F0");
+            RamClock = FormatOptional(data.RamClock, "F0");
 
             GpuUsage = FormatRequired(data.GpuUsage, "F1");
             GpuTemperature = FormatOptional(data.GpuTemperature, "F0");
             GpuMemory = FormatRequired(data.GpuMemoryUsedGB, "F1");
+            GpuMemoryTotal = FormatOptional(data.GpuMemoryTotalGB, "F1");
+            GpuMemoryUsagePercent =
+                FormatOptional(
+                    CalculatePercent(
+                        data.GpuMemoryUsedGB,
+                        data.GpuMemoryTotalGB,
+                        data.GpuMemoryUsagePercent),
+                    "F0");
             GpuClock = FormatOptional(data.GpuClock, "F0");
             GpuHotspot = FormatOptional(data.GpuHotspot, "F1");
             GpuMemoryJunction = FormatOptional(data.GpuMemoryJunction, "F0");
             GpuPower = FormatOptional(data.GpuPower, "F1");
+            Fps = FormatOptional(data.Fps, "F0");
+            TotalPower = FormatOptional(data.TotalPower, "F1");
 
             UpdateGpuTension(data.GpuTension);
 
@@ -423,6 +501,15 @@ namespace Monitoring_net9.ViewModels
             return value.ToString(format, CultureInfo.InvariantCulture);
         }
 
+        private static string FormatHardwareName(
+            string name,
+            string fallback)
+        {
+            return string.IsNullOrWhiteSpace(name)
+                ? fallback
+                : name.Trim();
+        }
+
         private static string FormatOptional(double value, string format)
         {
             if (!IsFinite(value) || value <= 0)
@@ -431,6 +518,22 @@ namespace Monitoring_net9.ViewModels
             }
 
             return value.ToString(format, CultureInfo.InvariantCulture);
+        }
+
+        private static double CalculatePercent(
+            double used,
+            double total,
+            double fallback)
+        {
+            if (IsFinite(used) &&
+                IsFinite(total) &&
+                used > 0 &&
+                total > 0)
+            {
+                return Math.Clamp((used / total) * 100, 0, 100);
+            }
+
+            return fallback;
         }
 
         private void UpdateGpuTension(double tension)
@@ -520,6 +623,9 @@ namespace Monitoring_net9.ViewModels
         {
             const double width = 320;
             const double height = 170;
+            const double topPadding = 6;
+            const double bottomPadding = 6;
+            const double graphHeight = height - topPadding - bottomPadding;
 
             var points = new PointCollection();
 
@@ -542,7 +648,7 @@ namespace Monitoring_net9.ViewModels
                 points.Add(
                     new WpfPoint(
                         index * step,
-                        height - (ratio * height)));
+                        topPadding + ((1 - ratio) * graphHeight)));
 
                 index++;
             }
@@ -575,6 +681,7 @@ namespace Monitoring_net9.ViewModels
             PointCollection linePoints)
         {
             const double height = 170;
+            const double baseline = height - 6;
 
             var points = new PointCollection();
 
@@ -584,7 +691,7 @@ namespace Monitoring_net9.ViewModels
             }
 
             points.Add(
-                new WpfPoint(linePoints[0].X, height));
+                new WpfPoint(linePoints[0].X, baseline));
 
             foreach (WpfPoint point in linePoints)
             {
@@ -592,7 +699,7 @@ namespace Monitoring_net9.ViewModels
             }
 
             points.Add(
-                new WpfPoint(linePoints[^1].X, height));
+                new WpfPoint(linePoints[^1].X, baseline));
 
             return points;
         }

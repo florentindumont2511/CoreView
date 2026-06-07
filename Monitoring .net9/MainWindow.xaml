@@ -24,7 +24,7 @@
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="0" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -33,38 +33,40 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="26"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="24"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="1.15*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.15*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.15*"/>
                 <RowDefinition Height="14"/>
-                <RowDefinition Height="1.7*"/>
+                <RowDefinition Height="1.75*"/>
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0"
                        Grid.ColumnSpan="3"
                        Text="{Binding CurrentTime}"
-                       FontSize="62"
+                       FontSize="56"
                        FontWeight="Bold"
                        Foreground="{Binding HeaderBrush}"/>
 
             <TextBlock Grid.Row="1"
                        Grid.ColumnSpan="3"
                        Text="{Binding CurrentDate}"
-                       FontSize="52"
+                       FontSize="46"
                        Foreground="{Binding SecondaryTextBrush}"/>
 
             <TextBlock Grid.Row="3"
                        Grid.ColumnSpan="3"
-                       Text="CPU / RAM"
-                       FontSize="44"
-                       FontWeight="Bold"
-                       Foreground="{Binding HeaderBrush}"/>
+                       Text="{Binding CpuName}"
+                       FontSize="30"
+                       FontWeight="SemiBold"
+                       Foreground="{Binding SecondaryTextBrush}"
+                       TextTrimming="CharacterEllipsis"/>
 
             <controls:MetricTile Grid.Row="5"
                                  Grid.Column="0"
+                                 Margin="0,0,5,0"
                                  Title="CPU Usage"
                                  Value="{Binding CpuUsage}"
                                  Unit="%"
@@ -73,7 +75,8 @@
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="5"
-                                 Grid.Column="2"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
                                  Title="CPU Temp"
                                  Value="{Binding CpuTemperature}"
                                  Unit="&#176;C"
@@ -82,8 +85,9 @@
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
-            <controls:MetricTile Grid.Row="7"
-                                 Grid.Column="0"
+            <controls:MetricTile Grid.Row="5"
+                                 Grid.Column="2"
+                                 Margin="5,0,0,0"
                                  Title="RAM"
                                  Value="{Binding RamUsage}"
                                  Unit="GB"
@@ -92,7 +96,8 @@
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="7"
-                                 Grid.Column="2"
+                                 Grid.Column="0"
+                                 Margin="0,0,5,0"
                                  Title="CPU Clock"
                                  Value="{Binding CpuClock}"
                                  Unit="GHz"
@@ -100,8 +105,9 @@
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
-            <controls:MetricTile Grid.Row="9"
-                                 Grid.Column="0"
+            <controls:MetricTile Grid.Row="7"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
                                  Title="CPU Power"
                                  Value="{Binding CpuPower}"
                                  Unit="W"
@@ -110,11 +116,43 @@
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
-            <controls:MetricTile Grid.Row="9"
+            <controls:MetricTile Grid.Row="7"
                                  Grid.Column="2"
+                                 Margin="5,0,0,0"
                                  Title="CPU Tension"
                                  Value="{Binding CpuTension}"
                                  Unit="V"
+                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="9"
+                                 Grid.Column="0"
+                                 Margin="0,0,5,0"
+                                 Title="RAM Usage"
+                                 Value="{Binding RamUsagePercent}"
+                                 Unit="%"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="9"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="RAM Total"
+                                 Value="{Binding RamTotal}"
+                                 Unit="GB"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="9"
+                                 Grid.Column="2"
+                                 Margin="5,0,0,0"
+                                 Title="RAM Clock"
+                                 Value="{Binding RamClock}"
+                                 Unit="MHz"
                                  Visibility="{Binding AdvancedSensorsVisibility}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
@@ -162,8 +200,8 @@
                               Height="170">
                             <Line X1="0"
                                   X2="320"
-                                  Y1="0"
-                                  Y2="0"
+                                  Y1="6"
+                                  Y2="6"
                                   Stroke="{Binding ChartGridBrush}"
                                   StrokeThickness="1"/>
                             <Line X1="0"
@@ -174,8 +212,8 @@
                                   StrokeThickness="1"/>
                             <Line X1="0"
                                   X2="320"
-                                  Y1="170"
-                                  Y2="170"
+                                  Y1="164"
+                                  Y2="164"
                                   Stroke="{Binding ChartGridBrush}"
                                   StrokeThickness="1"/>
                             <TextBlock Text="100%"
@@ -216,22 +254,22 @@
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="16"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.15*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.15*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.15*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.15*"/>
                 <RowDefinition Height="14"/>
-                <RowDefinition Height="1.7*"/>
+                <RowDefinition Height="1.75*"/>
             </Grid.RowDefinitions>
 
             <Button x:Name="SettingsButton"
@@ -262,14 +300,16 @@
 
             <TextBlock Grid.Row="0"
                        Grid.ColumnSpan="3"
-                       Text="GPU"
-                       FontSize="52"
-                       FontWeight="Bold"
-                       Foreground="{Binding HeaderBrush}"
-                       Margin="0,0,0,10"/>
+                       Text="{Binding GpuName}"
+                       FontSize="30"
+                       FontWeight="SemiBold"
+                       Foreground="{Binding SecondaryTextBrush}"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="0,18,190,10"/>
 
             <controls:MetricTile Grid.Row="2"
                                  Grid.Column="0"
+                                 Margin="0,0,5,0"
                                  Title="GPU Usage"
                                  Value="{Binding GpuUsage}"
                                  Unit="%"
@@ -278,7 +318,8 @@
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="2"
-                                 Grid.Column="2"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
                                  Title="GPU Temp"
                                  Value="{Binding GpuTemperature}"
                                  Unit="&#176;C"
@@ -287,8 +328,19 @@
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
+            <controls:MetricTile Grid.Row="2"
+                                 Grid.Column="2"
+                                 Margin="5,0,0,0"
+                                 Title="VRAM"
+                                 Value="{Binding GpuMemory}"
+                                 Unit="GB"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
             <controls:MetricTile Grid.Row="4"
                                  Grid.Column="0"
+                                 Margin="0,0,5,0"
                                  Title="GPU Clock"
                                  Value="{Binding GpuClock}"
                                  Unit="MHz"
@@ -297,16 +349,30 @@
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="4"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="GPU Power"
+                                 Value="{Binding GpuPower}"
+                                 Unit="W"
+                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="4"
                                  Grid.Column="2"
-                                 Title="VRAM"
-                                 Value="{Binding GpuMemory}"
-                                 Unit="GB"
+                                 Margin="5,0,0,0"
+                                 Title="GPU Tension"
+                                 Value="{Binding GpuTension}"
+                                 Unit="{Binding GpuTensionUnit}"
+                                 Visibility="{Binding AdvancedSensorsVisibility}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="6"
                                  Grid.Column="0"
+                                 Margin="0,0,5,0"
                                  Title="GPU Hotspot"
                                  Value="{Binding GpuHotspot}"
                                  Unit="&#176;C"
@@ -316,7 +382,19 @@
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="6"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="Total Power"
+                                 Value="{Binding TotalPower}"
+                                 Unit="W"
+                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="6"
                                  Grid.Column="2"
+                                 Margin="5,0,0,0"
                                  Title="Memory Junction"
                                  Value="{Binding GpuMemoryJunction}"
                                  Unit="&#176;C"
@@ -327,20 +405,30 @@
 
             <controls:MetricTile Grid.Row="8"
                                  Grid.Column="0"
-                                 Title="GPU Power"
-                                 Value="{Binding GpuPower}"
-                                 Unit="W"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 Margin="0,0,5,0"
+                                 Title="VRAM Usage"
+                                 Value="{Binding GpuMemoryUsagePercent}"
+                                 Unit="%"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="8"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="VRAM Total"
+                                 Value="{Binding GpuMemoryTotal}"
+                                 Unit="GB"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="8"
                                  Grid.Column="2"
-                                 Title="GPU Tension"
-                                 Value="{Binding GpuTension}"
-                                 Unit="{Binding GpuTensionUnit}"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 Margin="5,0,0,0"
+                                 Title="FPS"
+                                 Value="{Binding Fps}"
+                                 Unit=""
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
@@ -387,8 +475,8 @@
                               Height="170">
                             <Line X1="0"
                                   X2="320"
-                                  Y1="0"
-                                  Y2="0"
+                                  Y1="6"
+                                  Y2="6"
                                   Stroke="{Binding ChartGridBrush}"
                                   StrokeThickness="1"/>
                             <Line X1="0"
@@ -399,8 +487,8 @@
                                   StrokeThickness="1"/>
                             <Line X1="0"
                                   X2="320"
-                                  Y1="170"
-                                  Y2="170"
+                                  Y1="164"
+                                  Y2="164"
                                   Stroke="{Binding ChartGridBrush}"
                                   StrokeThickness="1"/>
                             <TextBlock Text="100%"

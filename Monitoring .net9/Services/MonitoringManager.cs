@@ -143,21 +143,50 @@ namespace Monitoring_net9.Services
 
         private void MergeData()
         {
+            Data.CpuName = hardwareMonitorService.Data.CpuName;
+            Data.GpuName = hardwareMonitorService.Data.GpuName;
             Data.CpuUsage = hardwareMonitorService.Data.CpuUsage;
             Data.RamUsed = hardwareMonitorService.Data.RamUsed;
+            Data.RamTotal = hardwareMonitorService.Data.RamTotal;
+            Data.RamUsagePercent = hardwareMonitorService.Data.RamUsagePercent;
             Data.GpuUsage = hardwareMonitorService.Data.GpuUsage;
             Data.GpuMemoryUsedGB = hardwareMonitorService.Data.GpuMemoryUsedGB;
+            Data.GpuMemoryTotalGB = hardwareMonitorService.Data.GpuMemoryTotalGB;
+            Data.GpuMemoryUsagePercent =
+                CalculatePercent(
+                    Data.GpuMemoryUsedGB,
+                    Data.GpuMemoryTotalGB,
+                    hardwareMonitorService.Data.GpuMemoryUsagePercent);
 
             Data.CpuTemperature = hwInfoService.Data.CpuTemperature;
             Data.CpuClock = hwInfoService.Data.CpuClock;
             Data.CpuPower = hwInfoService.Data.CpuPower;
             Data.CpuTension = hwInfoService.Data.CpuTension;
+            Data.RamClock = hwInfoService.Data.RamClock;
             Data.GpuTemperature = hwInfoService.Data.GpuTemperature;
             Data.GpuClock = hwInfoService.Data.GpuClock;
             Data.GpuHotspot = hwInfoService.Data.GpuHotspot;
             Data.GpuMemoryJunction = hwInfoService.Data.GpuMemoryJunction;
             Data.GpuPower = hwInfoService.Data.GpuPower;
             Data.GpuTension = hwInfoService.Data.GpuTension;
+            Data.Fps = hwInfoService.Data.Fps;
+            Data.TotalPower = Data.CpuPower + Data.GpuPower;
+        }
+
+        private static double CalculatePercent(
+            double used,
+            double total,
+            double fallback)
+        {
+            if (double.IsFinite(used) &&
+                double.IsFinite(total) &&
+                used > 0 &&
+                total > 0)
+            {
+                return Math.Clamp((used / total) * 100, 0, 100);
+            }
+
+            return fallback;
         }
     }
 }

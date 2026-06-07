@@ -149,7 +149,9 @@ namespace Monitoring_net9.Services
             foreach (var reading in Readings.Where(r => r.Value > 0))
             {
                 UpdateCpuSensor(reading);
+                UpdateMemorySensor(reading);
                 UpdateGpuSensor(reading, ref gpuPowerCore, ref gpuPowerSoc);
+                UpdateFrameRateSensor(reading);
             }
 
             Data.GpuPower = gpuPowerCore + gpuPowerSoc;
@@ -225,6 +227,25 @@ namespace Monitoring_net9.Services
             else if (ContainsLabel(reading, "GPU Core Voltage"))
             {
                 Data.GpuTension = reading.Value;
+            }
+        }
+
+        private void UpdateMemorySensor(HwInfoReadingElement reading)
+        {
+            if (ContainsLabel(reading, "Memory Clock") ||
+                ContainsLabel(reading, "DRAM Frequency"))
+            {
+                Data.RamClock = reading.Value;
+            }
+        }
+
+        private void UpdateFrameRateSensor(HwInfoReadingElement reading)
+        {
+            if (ContainsLabel(reading, "Framerate") ||
+                ContainsLabel(reading, "Frame Rate") ||
+                ContainsLabel(reading, "FPS"))
+            {
+                Data.Fps = reading.Value;
             }
         }
 
