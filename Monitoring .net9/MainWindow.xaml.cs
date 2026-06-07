@@ -97,43 +97,50 @@ namespace Monitoring_net9
 
         private void MoveToMonitoringScreen()
         {
-            var targetScreen =
-                Forms.Screen.AllScreens.FirstOrDefault(
-                    s => s.DeviceName.Contains(settings.SelectedScreen))
-                ?? Forms.Screen.AllScreens.LastOrDefault();
-
-            if (targetScreen == null)
+            try
             {
-                return;
-            }
+                var targetScreen =
+                    Forms.Screen.AllScreens.FirstOrDefault(
+                        s => s.DeviceName.Contains(settings.SelectedScreen))
+                    ?? Forms.Screen.AllScreens.LastOrDefault();
 
-            WindowState = WindowState.Normal;
+                if (targetScreen == null)
+                {
+                    return;
+                }
 
-            var source = PresentationSource.FromVisual(this);
-            double dpiX = source?.CompositionTarget?.TransformFromDevice.M11 ?? 1.0;
-            double dpiY = source?.CompositionTarget?.TransformFromDevice.M22 ?? 1.0;
-
-            Left = targetScreen.Bounds.Left * dpiX;
-            Top = targetScreen.Bounds.Top * dpiY;
-
-            if (settings.Fullscreen)
-            {
-                Width = targetScreen.Bounds.Width * dpiX;
-                Height = targetScreen.Bounds.Height * dpiY;
-                WindowStyle = WindowStyle.None;
-                ResizeMode = ResizeMode.NoResize;
-                WindowState = WindowState.Maximized;
-            }
-            else
-            {
-                WindowStyle = WindowStyle.SingleBorderWindow;
-                ResizeMode = ResizeMode.CanResize;
                 WindowState = WindowState.Normal;
-                Width = 1280;
-                Height = 720;
-            }
 
-            Activate();
+                var source = PresentationSource.FromVisual(this);
+                double dpiX = source?.CompositionTarget?.TransformFromDevice.M11 ?? 1.0;
+                double dpiY = source?.CompositionTarget?.TransformFromDevice.M22 ?? 1.0;
+
+                Left = targetScreen.Bounds.Left * dpiX;
+                Top = targetScreen.Bounds.Top * dpiY;
+
+                if (settings.Fullscreen)
+                {
+                    Width = targetScreen.Bounds.Width * dpiX;
+                    Height = targetScreen.Bounds.Height * dpiY;
+                    WindowStyle = WindowStyle.None;
+                    ResizeMode = ResizeMode.NoResize;
+                    WindowState = WindowState.Maximized;
+                }
+                else
+                {
+                    WindowStyle = WindowStyle.SingleBorderWindow;
+                    ResizeMode = ResizeMode.CanResize;
+                    WindowState = WindowState.Normal;
+                    Width = 1280;
+                    Height = 720;
+                }
+
+                Activate();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Move screen error: {ex.Message}");
+            }
         }
 
         private void TrayIcon_TrayMouseDoubleClick(
@@ -160,20 +167,27 @@ namespace Monitoring_net9
 
         private void OpenSettingsWindow()
         {
-            if (settingsWindow == null || !settingsWindow.IsLoaded)
+            try
             {
-                settingsWindow = new SettingsWindow();
+                if (settingsWindow == null || !settingsWindow.IsLoaded)
+                {
+                    settingsWindow = new SettingsWindow();
+                }
+
+                settingsWindow.Owner = this;
+                settingsWindow.Topmost = true;
+                bool? result = settingsWindow.ShowDialog();
+
+                if (result == true)
+                {
+                    settings = SettingsService.Load();
+                    viewModel.ApplySettings(settings);
+                    MoveToMonitoringScreen();
+                }
             }
-
-            settingsWindow.Owner = this;
-            settingsWindow.Topmost = true;
-            bool? result = settingsWindow.ShowDialog();
-
-            if (result == true)
+            catch (Exception ex)
             {
-                settings = SettingsService.Load();
-                viewModel.ApplySettings(settings);
-                MoveToMonitoringScreen();
+                LoggerService.Log($"Settings window error: {ex}");
             }
         }
 
@@ -219,29 +233,34 @@ namespace Monitoring_net9
 
         protected override void OnClosed(EventArgs e)
         {
-            timer.Stop();
-            hwInfoRestartTimer.Stop();
-            trayIcon.Dispose();
-            monitoringManager.Dispose();
+            try
+            {
+                timer.Stop();
+                hwInfoRestartTimer.Stop();
+                trayIcon.Dispose();
+                monitoringManager.Dispose();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Shutdown cleanup error: {ex.Message}");
+            }
 
             base.OnClosed(e);
         }
 
         private void Timer_Tick(object? sender, EventArgs e)
         {
-            viewModel.UpdateClock(DateTime.Now);
-
             try
             {
+                viewModel.UpdateClock(DateTime.Now);
                 monitoringManager.Update();
+                viewModel.UpdateHwInfoStatus(monitoringManager.IsHwInfoConnected);
+                viewModel.UpdateSensors(monitoringManager.Data);
             }
             catch (Exception ex)
             {
                 LoggerService.Log($"Update Screen Error: {ex.Message}");
             }
-
-            viewModel.UpdateHwInfoStatus(monitoringManager.IsHwInfoConnected);
-            viewModel.UpdateSensors(monitoringManager.Data);
         }
     }
 }

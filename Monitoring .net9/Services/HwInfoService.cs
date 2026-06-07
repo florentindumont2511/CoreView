@@ -9,6 +9,7 @@ namespace Monitoring_net9.Services
         private const string SharedMemoryName = "Global\\HWiNFO_SENS_SM2";
 
         private MemoryMappedFile? memoryFile;
+        private DateTime lastConnectErrorLog = DateTime.MinValue;
 
         public HwInfoSharedMemHeader Header { get; private set; }
 
@@ -38,7 +39,7 @@ namespace Monitoring_net9.Services
             }
             catch (Exception ex)
             {
-                LoggerService.Log($"HWiNFO Connect Error: {ex.Message}");
+                LogConnectError(ex);
                 IsConnected = false;
 
                 return false;
@@ -234,6 +235,17 @@ namespace Monitoring_net9.Services
             return reading.LabelOrig?.Contains(
                 label,
                 StringComparison.OrdinalIgnoreCase) == true;
+        }
+
+        private void LogConnectError(Exception ex)
+        {
+            if (DateTime.Now - lastConnectErrorLog < TimeSpan.FromSeconds(10))
+            {
+                return;
+            }
+
+            lastConnectErrorLog = DateTime.Now;
+            LoggerService.Log($"HWiNFO Connect Error: {ex.Message}");
         }
     }
 }

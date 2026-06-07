@@ -32,8 +32,16 @@ namespace Monitoring_net9.Services
         {
             string hwInfoPath = SettingsService.Load().HwInfoPath;
 
-            if (Process.GetProcessesByName(HwInfoProcessName).Length > 0)
+            try
             {
+                if (Process.GetProcessesByName(HwInfoProcessName).Length > 0)
+                {
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"HWiNFO process check error: {ex.Message}");
                 return;
             }
 
@@ -64,7 +72,18 @@ namespace Monitoring_net9.Services
         {
             hwInfoService.Disconnect();
 
-            foreach (var process in Process.GetProcessesByName(HwInfoProcessName))
+            Process[] processes = [];
+
+            try
+            {
+                processes = Process.GetProcessesByName(HwInfoProcessName);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"HWiNFO process list error: {ex.Message}");
+            }
+
+            foreach (var process in processes)
             {
                 try
                 {

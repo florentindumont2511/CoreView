@@ -10,7 +10,8 @@ var tests = new List<(string Name, Action Test)>
     ("applies visibility and theme settings", AppliesVisibilityAndThemeSettings),
     ("records bounded history points", RecordsBoundedHistoryPoints),
     ("uses configured history duration", UsesConfiguredHistoryDuration),
-    ("updates hwinfo status text", UpdatesHwInfoStatusText)
+    ("updates hwinfo status text", UpdatesHwInfoStatusText),
+    ("ignores invalid sensor values", IgnoresInvalidSensorValues)
 };
 
 foreach ((string name, Action test) in tests)
@@ -137,6 +138,26 @@ static void UpdatesHwInfoStatusText()
 
     viewModel.UpdateHwInfoStatus(false);
     AssertEqual("HWiNFO déconnecté", viewModel.HwInfoStatus);
+}
+
+static void IgnoresInvalidSensorValues()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            CpuUsage = double.NaN,
+            CpuTemperature = double.PositiveInfinity,
+            GpuUsage = double.NegativeInfinity,
+            GpuTemperature = double.NaN
+        });
+
+    AssertEqual("--", viewModel.CpuUsage);
+    AssertEqual("--", viewModel.CpuTemperature);
+    AssertEqual("--", viewModel.GpuUsage);
+    AssertEqual("--", viewModel.GpuTemperature);
+    AssertEqual(1, viewModel.CpuUsageHistoryPoints.Count);
 }
 
 static void AssertEqual<T>(

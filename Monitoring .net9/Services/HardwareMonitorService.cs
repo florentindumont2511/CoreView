@@ -5,29 +5,16 @@ namespace Monitoring_net9.Services
 {
     public class HardwareMonitorService : IDisposable
     {
-        private readonly Computer computer;
+        private Computer computer;
         private bool isOpen;
+        private DateTime lastResetAttempt = DateTime.MinValue;
 
         public SensorData Data { get; } = new();
 
         public HardwareMonitorService()
         {
-            computer = new Computer
-            {
-                IsCpuEnabled = true,
-                IsMemoryEnabled = true,
-                IsGpuEnabled = true
-            };
-
-            try
-            {
-                computer.Open();
-                isOpen = true;
-            }
-            catch (Exception ex)
-            {
-                LoggerService.Log($"Hardware monitor open error: {ex.Message}");
-            }
+            computer = CreateComputer();
+            OpenComputer();
         }
 
         public void Update()
@@ -37,14 +24,22 @@ namespace Monitoring_net9.Services
                 return;
             }
 
-            foreach (var hardware in computer.Hardware)
+            try
             {
-                UpdateHardware(hardware);
-
-                foreach (var subHardware in hardware.SubHardware)
+                foreach (var hardware in computer.Hardware.ToArray())
                 {
-                    UpdateHardware(subHardware);
+                    UpdateHardwareSafely(hardware);
+
+                    foreach (var subHardware in hardware.SubHardware.ToArray())
+                    {
+                        UpdateHardwareSafely(subHardware);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Hardware monitor update error: {ex.Message}");
+                ResetComputer();
             }
         }
 
@@ -55,14 +50,82 @@ namespace Monitoring_net9.Services
                 return;
             }
 
-            computer.Close();
+            try
+            {
+                computer.Close();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Hardware monitor dispose error: {ex.Message}");
+            }
+        }
+
+        private static Computer CreateComputer()
+        {
+            return new Computer
+            {
+                IsCpuEnabled = true,
+                IsMemoryEnabled = true,
+                IsGpuEnabled = true
+            };
+        }
+
+        private void OpenComputer()
+        {
+            try
+            {
+                computer.Open();
+                isOpen = true;
+            }
+            catch (Exception ex)
+            {
+                isOpen = false;
+                LoggerService.Log($"Hardware monitor open error: {ex.Message}");
+            }
+        }
+
+        private void ResetComputer()
+        {
+            if (DateTime.Now - lastResetAttempt < TimeSpan.FromSeconds(5))
+            {
+                return;
+            }
+
+            lastResetAttempt = DateTime.Now;
+            isOpen = false;
+
+            try
+            {
+                computer.Close();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Hardware monitor close error: {ex.Message}");
+            }
+
+            computer = CreateComputer();
+            OpenComputer();
+        }
+
+        private void UpdateHardwareSafely(IHardware hardware)
+        {
+            try
+            {
+                UpdateHardware(hardware);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log(
+                    $"Hardware update error ({hardware.Name}): {ex.Message}");
+                ResetComputer();
+            }
         }
 
         private void UpdateHardware(IHardware hardware)
         {
             hardware.Update();
 
-            foreach (var sensor in hardware.Sensors)
+            foreach (var sensor in hardware.Sensors.ToArray())
             {
                 ReadSensor(hardware.HardwareType, sensor);
             }
@@ -72,6 +135,12 @@ namespace Monitoring_net9.Services
             HardwareType hardwareType,
             ISensor sensor)
         {
+            if (sensor.Value is float value &&
+                (float.IsNaN(value) || float.IsInfinity(value)))
+            {
+                return;
+            }
+
             switch (hardwareType)
             {
                 case HardwareType.Cpu:

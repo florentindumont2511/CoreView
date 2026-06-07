@@ -32,12 +32,8 @@ namespace Monitoring_net9
                         ? ScreenComboBox.Items[0]
                         : null;
 
-            using RegistryKey? key =
-                Registry.CurrentUser.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
-
             StartupCheckBox.IsChecked =
-                key?.GetValue("CoreView") != null;
+                IsStartupEnabled();
 
             FullscreenCheckBox.IsChecked =
                 settings.Fullscreen;
@@ -86,54 +82,63 @@ namespace Monitoring_net9
             object sender,
             RoutedEventArgs e)
         {
-            AppSettings settings =
-                SettingsService.Load();
+            try
+            {
+                AppSettings settings =
+                    SettingsService.Load();
 
-            settings.Fullscreen =
-                FullscreenCheckBox.IsChecked == true;
+                settings.Fullscreen =
+                    FullscreenCheckBox.IsChecked == true;
 
-            settings.SelectedScreen =
-                ScreenComboBox.SelectedItem?.ToString()
-                ?? "DISPLAY1";
+                settings.SelectedScreen =
+                    ScreenComboBox.SelectedItem?.ToString()
+                    ?? "DISPLAY1";
 
-            settings.HwInfoPath =
-                string.IsNullOrWhiteSpace(HwInfoPathTextBox.Text)
-                    ? new AppSettings().HwInfoPath
-                    : HwInfoPathTextBox.Text.Trim();
+                settings.HwInfoPath =
+                    string.IsNullOrWhiteSpace(HwInfoPathTextBox.Text)
+                        ? new AppSettings().HwInfoPath
+                        : HwInfoPathTextBox.Text.Trim();
 
-            settings.Theme =
-                (ThemeComboBox.SelectedItem as WpfComboBoxItem)
-                    ?.Content
-                    ?.ToString()
-                ?? "Dark";
+                settings.Theme =
+                    (ThemeComboBox.SelectedItem as WpfComboBoxItem)
+                        ?.Content
+                        ?.ToString()
+                    ?? "Dark";
 
-            settings.DashboardScale =
-                ReadDouble(DashboardScaleTextBox, settings.DashboardScale);
-            settings.CpuWarningTemperature =
-                ReadDouble(CpuWarningTextBox, settings.CpuWarningTemperature);
-            settings.CpuDangerTemperature =
-                ReadDouble(CpuDangerTextBox, settings.CpuDangerTemperature);
-            settings.GpuWarningTemperature =
-                ReadDouble(GpuWarningTextBox, settings.GpuWarningTemperature);
-            settings.GpuDangerTemperature =
-                ReadDouble(GpuDangerTextBox, settings.GpuDangerTemperature);
+                settings.DashboardScale =
+                    ReadDouble(DashboardScaleTextBox, settings.DashboardScale);
+                settings.CpuWarningTemperature =
+                    ReadDouble(CpuWarningTextBox, settings.CpuWarningTemperature);
+                settings.CpuDangerTemperature =
+                    ReadDouble(CpuDangerTextBox, settings.CpuDangerTemperature);
+                settings.GpuWarningTemperature =
+                    ReadDouble(GpuWarningTextBox, settings.GpuWarningTemperature);
+                settings.GpuDangerTemperature =
+                    ReadDouble(GpuDangerTextBox, settings.GpuDangerTemperature);
 
-            settings.ShowAdvancedSensors =
-                ShowAdvancedSensorsCheckBox.IsChecked == true;
-            settings.ShowMiniGraphs =
-                ShowMiniGraphsCheckBox.IsChecked == true;
-            settings.HistoryDurationSeconds =
-                ReadHistoryDuration();
+                settings.ShowAdvancedSensors =
+                    ShowAdvancedSensorsCheckBox.IsChecked == true;
+                settings.ShowMiniGraphs =
+                    ShowMiniGraphsCheckBox.IsChecked == true;
+                settings.HistoryDurationSeconds =
+                    ReadHistoryDuration();
 
-            NormalizeThresholds(settings);
+                NormalizeThresholds(settings);
 
-            SettingsService.Save(settings);
+                SettingsService.Save(settings);
 
-            System.Windows.MessageBox.Show(
-                "Param\u00e8tres sauvegard\u00e9s !");
+                System.Windows.MessageBox.Show(
+                    "Param\u00e8tres sauvegard\u00e9s !");
 
-            DialogResult = true;
-            Close();
+                DialogResult = true;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Settings save UI error: {ex}");
+                System.Windows.MessageBox.Show(
+                    "Impossible de sauvegarder les param\u00e8tres.");
+            }
         }
 
         private void ResetButton_Click(
@@ -226,7 +231,7 @@ namespace Monitoring_net9
                     CultureInfo.InvariantCulture,
                     out double value))
             {
-                return value;
+                return IsFinite(value) ? value : fallback;
             }
 
             if (double.TryParse(
@@ -235,7 +240,7 @@ namespace Monitoring_net9
                     CultureInfo.CurrentCulture,
                     out value))
             {
-                return value;
+                return IsFinite(value) ? value : fallback;
             }
 
             return fallback;
@@ -243,6 +248,25 @@ namespace Monitoring_net9
 
         private static void NormalizeThresholds(AppSettings settings)
         {
+            settings.DashboardScale =
+                IsFinite(settings.DashboardScale) ? settings.DashboardScale : 1.0;
+            settings.CpuWarningTemperature =
+                IsFinite(settings.CpuWarningTemperature)
+                    ? settings.CpuWarningTemperature
+                    : 70;
+            settings.CpuDangerTemperature =
+                IsFinite(settings.CpuDangerTemperature)
+                    ? settings.CpuDangerTemperature
+                    : 90;
+            settings.GpuWarningTemperature =
+                IsFinite(settings.GpuWarningTemperature)
+                    ? settings.GpuWarningTemperature
+                    : 80;
+            settings.GpuDangerTemperature =
+                IsFinite(settings.GpuDangerTemperature)
+                    ? settings.GpuDangerTemperature
+                    : 95;
+
             settings.DashboardScale =
                 Math.Clamp(settings.DashboardScale, 0.75, 1.35);
 
@@ -263,37 +287,44 @@ namespace Monitoring_net9
             object sender,
             RoutedEventArgs e)
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
+            try
             {
-                Title = "S\u00e9lectionner HWiNFO",
-                Filter = "Applications (*.exe)|*.exe|Tous les fichiers (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            };
-
-            if (File.Exists(HwInfoPathTextBox.Text))
-            {
-                dialog.InitialDirectory =
-                    Path.GetDirectoryName(HwInfoPathTextBox.Text);
-                dialog.FileName =
-                    Path.GetFileName(HwInfoPathTextBox.Text);
-            }
-            else
-            {
-                string defaultDirectory =
-                    Path.GetDirectoryName(new AppSettings().HwInfoPath)
-                    ?? Environment.GetFolderPath(
-                        Environment.SpecialFolder.ProgramFiles);
-
-                if (Directory.Exists(defaultDirectory))
+                var dialog = new Microsoft.Win32.OpenFileDialog
                 {
-                    dialog.InitialDirectory = defaultDirectory;
+                    Title = "S\u00e9lectionner HWiNFO",
+                    Filter = "Applications (*.exe)|*.exe|Tous les fichiers (*.*)|*.*",
+                    CheckFileExists = true,
+                    Multiselect = false
+                };
+
+                if (File.Exists(HwInfoPathTextBox.Text))
+                {
+                    dialog.InitialDirectory =
+                        Path.GetDirectoryName(HwInfoPathTextBox.Text);
+                    dialog.FileName =
+                        Path.GetFileName(HwInfoPathTextBox.Text);
+                }
+                else
+                {
+                    string defaultDirectory =
+                        Path.GetDirectoryName(new AppSettings().HwInfoPath)
+                        ?? Environment.GetFolderPath(
+                            Environment.SpecialFolder.ProgramFiles);
+
+                    if (Directory.Exists(defaultDirectory))
+                    {
+                        dialog.InitialDirectory = defaultDirectory;
+                    }
+                }
+
+                if (dialog.ShowDialog(this) == true)
+                {
+                    HwInfoPathTextBox.Text = dialog.FileName;
                 }
             }
-
-            if (dialog.ShowDialog(this) == true)
+            catch (Exception ex)
             {
-                HwInfoPathTextBox.Text = dialog.FileName;
+                LoggerService.Log($"HWiNFO browse error: {ex.Message}");
             }
         }
 
@@ -301,28 +332,64 @@ namespace Monitoring_net9
             object sender,
             RoutedEventArgs e)
         {
-            using RegistryKey? key =
-                Registry.CurrentUser.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
-                    true);
+            try
+            {
+                using RegistryKey? key =
+                    Registry.CurrentUser.OpenSubKey(
+                        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+                        true);
 
-            key?.SetValue(
-                "CoreView",
-                Process.GetCurrentProcess().MainModule?.FileName ?? string.Empty);
+                key?.SetValue(
+                    "CoreView",
+                    Process.GetCurrentProcess().MainModule?.FileName ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Startup registry set error: {ex.Message}");
+            }
         }
 
         private void StartupCheckBox_Unchecked(
             object sender,
             RoutedEventArgs e)
         {
-            using RegistryKey? key =
-                Registry.CurrentUser.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
-                    true);
+            try
+            {
+                using RegistryKey? key =
+                    Registry.CurrentUser.OpenSubKey(
+                        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+                        true);
 
-            key?.DeleteValue(
-                "CoreView",
-                false);
+                key?.DeleteValue(
+                    "CoreView",
+                    false);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Startup registry delete error: {ex.Message}");
+            }
+        }
+
+        private static bool IsStartupEnabled()
+        {
+            try
+            {
+                using RegistryKey? key =
+                    Registry.CurrentUser.OpenSubKey(
+                        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+
+                return key?.GetValue("CoreView") != null;
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Startup registry read error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static bool IsFinite(double value)
+        {
+            return !double.IsNaN(value) && !double.IsInfinity(value);
         }
     }
 }

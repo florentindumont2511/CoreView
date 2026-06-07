@@ -332,10 +332,14 @@ namespace Monitoring_net9.ViewModels
 
         public void ApplySettings(AppSettings settings)
         {
-            cpuWarningTemperature = settings.CpuWarningTemperature;
-            cpuDangerTemperature = settings.CpuDangerTemperature;
-            gpuWarningTemperature = settings.GpuWarningTemperature;
-            gpuDangerTemperature = settings.GpuDangerTemperature;
+            cpuWarningTemperature =
+                GetFiniteOrDefault(settings.CpuWarningTemperature, 70);
+            cpuDangerTemperature =
+                GetFiniteOrDefault(settings.CpuDangerTemperature, 90);
+            gpuWarningTemperature =
+                GetFiniteOrDefault(settings.GpuWarningTemperature, 80);
+            gpuDangerTemperature =
+                GetFiniteOrDefault(settings.GpuDangerTemperature, 95);
             historyDurationSeconds =
                 Math.Clamp(settings.HistoryDurationSeconds, 30, 300);
             HistoryDurationLabel =
@@ -347,7 +351,8 @@ namespace Monitoring_net9.ViewModels
             GpuTemperatureAxisLabel =
                 $"{gpuDangerTemperature:F0}°C";
 
-            DashboardScale = Math.Clamp(settings.DashboardScale, 0.75, 1.35);
+            DashboardScale =
+                Math.Clamp(GetFiniteOrDefault(settings.DashboardScale, 1.0), 0.75, 1.35);
             AdvancedSensorsVisibility =
                 settings.ShowAdvancedSensors ? Visibility.Visible : Visibility.Collapsed;
             MiniGraphsVisibility =
@@ -410,12 +415,17 @@ namespace Monitoring_net9.ViewModels
 
         private static string FormatRequired(double value, string format)
         {
+            if (!IsFinite(value))
+            {
+                return "--";
+            }
+
             return value.ToString(format, CultureInfo.InvariantCulture);
         }
 
         private static string FormatOptional(double value, string format)
         {
-            if (value <= 0)
+            if (!IsFinite(value) || value <= 0)
             {
                 return "--";
             }
@@ -425,7 +435,7 @@ namespace Monitoring_net9.ViewModels
 
         private void UpdateGpuTension(double tension)
         {
-            if (tension <= 0)
+            if (!IsFinite(tension) || tension <= 0)
             {
                 GpuTension = "--";
                 GpuTensionUnit = string.Empty;
@@ -448,7 +458,7 @@ namespace Monitoring_net9.ViewModels
             double warningThreshold,
             double dangerThreshold)
         {
-            if (temperature <= 0)
+            if (!IsFinite(temperature) || temperature <= 0)
             {
                 return MediaBrushes.White;
             }
@@ -491,6 +501,11 @@ namespace Monitoring_net9.ViewModels
             Queue<double> history,
             double value)
         {
+            if (!IsFinite(value))
+            {
+                value = 0;
+            }
+
             history.Enqueue(Math.Max(0, value));
 
             while (history.Count > historyDurationSeconds)
@@ -539,9 +554,21 @@ namespace Monitoring_net9.ViewModels
             IReadOnlyCollection<double> values)
         {
             double maxValue =
-                Math.Max(25, values.Count == 0 ? 100 : values.Max());
+                Math.Max(25, values.Count == 0 ? 100 : values.Where(IsFinite).DefaultIfEmpty(0).Max());
 
             return CreatePoints(values, maxValue);
+        }
+
+        private static bool IsFinite(double value)
+        {
+            return !double.IsNaN(value) && !double.IsInfinity(value);
+        }
+
+        private static double GetFiniteOrDefault(
+            double value,
+            double fallback)
+        {
+            return IsFinite(value) ? value : fallback;
         }
 
         private static PointCollection CreateAreaPoints(
