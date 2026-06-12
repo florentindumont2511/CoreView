@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using WpfCheckBox = System.Windows.Controls.CheckBox;
 using WpfComboBoxItem = System.Windows.Controls.ComboBoxItem;
 using WpfTextBox = System.Windows.Controls.TextBox;
 using Forms = System.Windows.Forms;
@@ -21,6 +22,8 @@ namespace Monitoring_net9
 
             AppSettings settings =
                 SettingsService.Load();
+
+            BuildSensorOptions(settings);
 
             foreach (var screen in Forms.Screen.AllScreens)
             {
@@ -50,6 +53,8 @@ namespace Monitoring_net9
                         item => item.Content?.ToString() == settings.Theme)
                 ?? ThemeComboBox.Items[0];
 
+            SelectDateTimeLanguage(settings.DateTimeLanguage);
+
             DashboardScaleTextBox.Text =
                 settings.DashboardScale.ToString(
                     "F2",
@@ -74,11 +79,20 @@ namespace Monitoring_net9
                 settings.GpuDangerTemperature.ToString(
                     "F0",
                     CultureInfo.InvariantCulture);
+            UsageWarningTextBox.Text =
+                settings.UsageWarningPercent.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
+            UsageDangerTextBox.Text =
+                settings.UsageDangerPercent.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
 
             ShowAdvancedSensorsCheckBox.IsChecked =
                 settings.ShowAdvancedSensors;
             ShowMiniGraphsCheckBox.IsChecked =
                 settings.ShowMiniGraphs;
+            ApplyGraphOptions(settings);
 
             SelectHistoryDuration(settings.HistoryDurationSeconds);
         }
@@ -110,6 +124,9 @@ namespace Monitoring_net9
                         ?.ToString()
                     ?? "Dark";
 
+                settings.DateTimeLanguage =
+                    ReadDateTimeLanguage();
+
                 settings.DashboardScalePreset =
                     ReadDashboardScalePreset();
                 settings.DashboardScale =
@@ -122,11 +139,35 @@ namespace Monitoring_net9
                     ReadDouble(GpuWarningTextBox, settings.GpuWarningTemperature);
                 settings.GpuDangerTemperature =
                     ReadDouble(GpuDangerTextBox, settings.GpuDangerTemperature);
+                settings.UsageWarningPercent =
+                    ReadDouble(UsageWarningTextBox, settings.UsageWarningPercent);
+                settings.UsageDangerPercent =
+                    ReadDouble(UsageDangerTextBox, settings.UsageDangerPercent);
 
                 settings.ShowAdvancedSensors =
                     ShowAdvancedSensorsCheckBox.IsChecked == true;
                 settings.ShowMiniGraphs =
                     ShowMiniGraphsCheckBox.IsChecked == true;
+                settings.ShowCpuUsageGraph =
+                    ShowCpuUsageGraphCheckBox.IsChecked == true;
+                settings.ShowCpuTemperatureGraph =
+                    ShowCpuTemperatureGraphCheckBox.IsChecked == true;
+                settings.ShowGpuUsageGraph =
+                    ShowGpuUsageGraphCheckBox.IsChecked == true;
+                settings.ShowGpuTemperatureGraph =
+                    ShowGpuTemperatureGraphCheckBox.IsChecked == true;
+                settings.ShowCpuGraph =
+                    settings.ShowCpuUsageGraph || settings.ShowCpuTemperatureGraph;
+                settings.ShowGpuGraph =
+                    settings.ShowGpuUsageGraph || settings.ShowGpuTemperatureGraph;
+                settings.HiddenSensors =
+                    SensorOptionsPanel.Children
+                        .OfType<WpfCheckBox>()
+                        .Where(checkBox => checkBox.IsChecked != true)
+                        .Select(checkBox => checkBox.Tag?.ToString())
+                        .Where(id => !string.IsNullOrWhiteSpace(id))
+                        .Cast<string>()
+                        .ToList();
                 settings.HistoryDurationSeconds =
                     ReadHistoryDuration();
 
@@ -155,6 +196,31 @@ namespace Monitoring_net9
             ApplySettingsToControls(new AppSettings());
         }
 
+        private void ResetMonitoringDataButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            try
+            {
+                if (Owner is MainWindow mainWindow)
+                {
+                    mainWindow.ResetMonitoringData();
+                    System.Windows.MessageBox.Show(
+                        this,
+                        "Les valeurs Min, Moy, Max et les graphes ont été remis à zéro.",
+                        "CoreView");
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Monitoring data reset error: {ex}");
+                System.Windows.MessageBox.Show(
+                    this,
+                    "Impossible de remettre les mesures à zéro.",
+                    "CoreView");
+            }
+        }
+
         private void ApplySettingsToControls(AppSettings settings)
         {
             ScreenComboBox.SelectedItem =
@@ -176,6 +242,8 @@ namespace Monitoring_net9
                     .FirstOrDefault(
                         item => item.Content?.ToString() == settings.Theme)
                 ?? ThemeComboBox.Items[0];
+
+            SelectDateTimeLanguage(settings.DateTimeLanguage);
 
             DashboardScaleTextBox.Text =
                 settings.DashboardScale.ToString(
@@ -201,12 +269,68 @@ namespace Monitoring_net9
                 settings.GpuDangerTemperature.ToString(
                     "F0",
                     CultureInfo.InvariantCulture);
+            UsageWarningTextBox.Text =
+                settings.UsageWarningPercent.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
+            UsageDangerTextBox.Text =
+                settings.UsageDangerPercent.ToString(
+                    "F0",
+                    CultureInfo.InvariantCulture);
 
             ShowAdvancedSensorsCheckBox.IsChecked =
                 settings.ShowAdvancedSensors;
             ShowMiniGraphsCheckBox.IsChecked =
                 settings.ShowMiniGraphs;
+            ApplyGraphOptions(settings);
+            ApplySensorOptions(settings);
             SelectHistoryDuration(settings.HistoryDurationSeconds);
+        }
+
+        private void BuildSensorOptions(AppSettings settings)
+        {
+            SensorOptionsPanel.Children.Clear();
+
+            foreach (SensorOption option in SensorOptionDefinitions.All)
+            {
+                SensorOptionsPanel.Children.Add(
+                    new WpfCheckBox
+                    {
+                        Content = option.DisplayName,
+                        Tag = option.Id,
+                        Width = 280,
+                        FontSize = 20,
+                        Foreground = System.Windows.Media.Brushes.White,
+                        Margin = new Thickness(0, 0, 12, 12)
+                    });
+            }
+
+            ApplySensorOptions(settings);
+        }
+
+        private void ApplyGraphOptions(AppSettings settings)
+        {
+            ShowCpuUsageGraphCheckBox.IsChecked =
+                settings.ShowCpuGraph && settings.ShowCpuUsageGraph;
+            ShowCpuTemperatureGraphCheckBox.IsChecked =
+                settings.ShowCpuGraph && settings.ShowCpuTemperatureGraph;
+            ShowGpuUsageGraphCheckBox.IsChecked =
+                settings.ShowGpuGraph && settings.ShowGpuUsageGraph;
+            ShowGpuTemperatureGraphCheckBox.IsChecked =
+                settings.ShowGpuGraph && settings.ShowGpuTemperatureGraph;
+        }
+
+        private void ApplySensorOptions(AppSettings settings)
+        {
+            HashSet<string> hiddenSensors =
+                new(settings.HiddenSensors ?? [], StringComparer.Ordinal);
+
+            foreach (WpfCheckBox checkBox in
+                     SensorOptionsPanel.Children.OfType<WpfCheckBox>())
+            {
+                checkBox.IsChecked =
+                    !hiddenSensors.Contains(checkBox.Tag?.ToString() ?? string.Empty);
+            }
         }
 
         private int ReadHistoryDuration()
@@ -218,6 +342,25 @@ namespace Monitoring_net9
             }
 
             return new AppSettings().HistoryDurationSeconds;
+        }
+
+        private string ReadDateTimeLanguage()
+        {
+            if (DateTimeLanguageComboBox.SelectedItem is WpfComboBoxItem item)
+            {
+                return item.Tag?.ToString() ?? "French";
+            }
+
+            return new AppSettings().DateTimeLanguage;
+        }
+
+        private void SelectDateTimeLanguage(string language)
+        {
+            DateTimeLanguageComboBox.SelectedItem =
+                DateTimeLanguageComboBox.Items
+                    .OfType<WpfComboBoxItem>()
+                    .FirstOrDefault(item => item.Tag?.ToString() == language)
+                ?? DateTimeLanguageComboBox.Items[0];
         }
 
         private string ReadDashboardScalePreset()
@@ -403,9 +546,27 @@ namespace Monitoring_net9
                 IsFinite(settings.GpuDangerTemperature)
                     ? settings.GpuDangerTemperature
                     : 95;
+            settings.UsageWarningPercent =
+                IsFinite(settings.UsageWarningPercent)
+                    ? settings.UsageWarningPercent
+                    : 90;
+            settings.UsageDangerPercent =
+                IsFinite(settings.UsageDangerPercent)
+                    ? settings.UsageDangerPercent
+                    : 100;
 
             settings.DashboardScale =
                 Math.Clamp(settings.DashboardScale, 0.75, 1.35);
+            settings.UsageWarningPercent =
+                Math.Clamp(settings.UsageWarningPercent, 0, 99);
+            settings.UsageDangerPercent =
+                Math.Clamp(settings.UsageDangerPercent, 1, 100);
+
+            if (settings.UsageDangerPercent <= settings.UsageWarningPercent)
+            {
+                settings.UsageDangerPercent =
+                    Math.Min(100, settings.UsageWarningPercent + 1);
+            }
 
             if (settings.CpuDangerTemperature <= settings.CpuWarningTemperature)
             {

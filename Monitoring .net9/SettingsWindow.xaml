@@ -68,6 +68,24 @@
 
             <StackPanel Orientation="Horizontal"
                         Margin="0,0,0,24">
+                <TextBlock Text="Langue date et heure"
+                           Foreground="White"
+                           FontSize="22"
+                           VerticalAlignment="Center"
+                           Margin="0,0,18,0"/>
+
+                <ComboBox x:Name="DateTimeLanguageComboBox"
+                          Width="240"
+                          Height="48"
+                          FontSize="20">
+                    <ComboBoxItem Content="Fran&#231;ais" Tag="French"/>
+                    <ComboBoxItem Content="English" Tag="English"/>
+                    <ComboBoxItem Content="Syst&#232;me" Tag="System"/>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,24">
                 <ComboBox x:Name="ThemeComboBox"
                           Width="220"
                           Height="48"
@@ -154,6 +172,48 @@
                          VerticalContentAlignment="Center"/>
             </Grid>
 
+            <TextBlock Text="Seuils utilisation"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,10"/>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,24">
+                <TextBlock Text="Orange"
+                           Foreground="White"
+                           FontSize="22"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"/>
+                <TextBox x:Name="UsageWarningTextBox"
+                         Width="110"
+                         Height="48"
+                         FontSize="20"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,10,0"/>
+                <TextBlock Text="%"
+                           Foreground="White"
+                           FontSize="22"
+                           VerticalAlignment="Center"
+                           Margin="0,0,34,0"/>
+
+                <TextBlock Text="Rouge"
+                           Foreground="White"
+                           FontSize="22"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"/>
+                <TextBox x:Name="UsageDangerTextBox"
+                         Width="110"
+                         Height="48"
+                         FontSize="20"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,10,0"/>
+                <TextBlock Text="%"
+                           Foreground="White"
+                           FontSize="22"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
             <CheckBox x:Name="ShowAdvancedSensorsCheckBox"
                       Content="Afficher les capteurs avanc&#233;s"
                       Foreground="White"
@@ -165,6 +225,48 @@
                       Foreground="White"
                       FontSize="22"
                       Margin="0,0,0,14"/>
+
+            <TextBlock Text="Sondes affichées"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,8,0,10"/>
+
+            <WrapPanel x:Name="SensorOptionsPanel"
+                       Margin="0,0,0,18"/>
+
+            <TextBlock Text="Graphes affichés"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,10"/>
+
+            <WrapPanel Margin="0,0,0,18">
+                <CheckBox x:Name="ShowCpuUsageGraphCheckBox"
+                          Content="CPU Usage"
+                          Width="210"
+                          Foreground="White"
+                          FontSize="22"
+                          Margin="0,0,18,12"/>
+                <CheckBox x:Name="ShowCpuTemperatureGraphCheckBox"
+                          Content="CPU Température"
+                          Width="260"
+                          Foreground="White"
+                          FontSize="22"
+                          Margin="0,0,18,12"/>
+                <CheckBox x:Name="ShowGpuUsageGraphCheckBox"
+                          Content="GPU Usage"
+                          Width="210"
+                          Foreground="White"
+                          FontSize="22"
+                          Margin="0,0,18,12"/>
+                <CheckBox x:Name="ShowGpuTemperatureGraphCheckBox"
+                          Content="GPU Température"
+                          Width="260"
+                          Foreground="White"
+                          FontSize="22"
+                          Margin="0,0,18,12"/>
+            </WrapPanel>
 
             <TextBlock Text="Dur&#233;e historique"
                        FontSize="24"
@@ -196,7 +298,15 @@
                       Content="Mode plein &#233;cran"
                       Foreground="White"
                       FontSize="22"
-                      Margin="0,0,0,28"/>
+                      Margin="0,0,0,20"/>
+
+            <Button Content="Remettre à zéro les mesures et graphes"
+                    Width="430"
+                    Height="58"
+                    FontSize="21"
+                    HorizontalAlignment="Left"
+                    Margin="0,0,0,24"
+                    Click="ResetMonitoringDataButton_Click"/>
 
             <StackPanel Orientation="Horizontal">
                 <Button Content="Sauvegarder"

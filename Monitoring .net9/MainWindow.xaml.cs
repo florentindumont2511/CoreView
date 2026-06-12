@@ -165,6 +165,11 @@ namespace Monitoring_net9
             OpenSettingsWindow();
         }
 
+        internal void ResetMonitoringData()
+        {
+            viewModel.ResetMonitoringData();
+        }
+
         private void OpenSettingsWindow()
         {
             try

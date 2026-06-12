@@ -14,7 +14,12 @@ var tests = new List<(string Name, Action Test)>
     ("ignores invalid sensor values", IgnoresInvalidSensorValues),
     ("updates hardware names", UpdatesHardwareNames),
     ("formats extended metrics", FormatsExtendedMetrics),
-    ("calculates vram usage percent from used and total", CalculatesVramUsagePercentFromUsedAndTotal)
+    ("calculates vram usage percent from used and total", CalculatesVramUsagePercentFromUsedAndTotal),
+    ("formats date and time using selected language", FormatsDateAndTimeUsingSelectedLanguage),
+    ("applies sensor and graph visibility choices", AppliesSensorAndGraphVisibilityChoices),
+    ("applies usage and temperature colors", AppliesUsageAndTemperatureColors),
+    ("tracks minimum average and maximum values", TracksMinimumAverageAndMaximumValues),
+    ("resets statistics and graph history", ResetsStatisticsAndGraphHistory)
 };
 
 foreach ((string name, Action test) in tests)
@@ -216,6 +221,138 @@ static void CalculatesVramUsagePercentFromUsedAndTotal()
         });
 
     AssertEqual("29", viewModel.GpuMemoryUsagePercent);
+}
+
+static void FormatsDateAndTimeUsingSelectedLanguage()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.ApplySettings(
+        new AppSettings
+        {
+            DateTimeLanguage = "English"
+        });
+
+    viewModel.UpdateClock(new DateTime(2026, 6, 7, 15, 4, 47));
+
+    AssertEqual("03:04:47 PM", viewModel.CurrentTime);
+    AssertEqual("Sunday 07 June 2026", viewModel.CurrentDate);
+}
+
+static void AppliesSensorAndGraphVisibilityChoices()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.ApplySettings(
+        new AppSettings
+        {
+            ShowMiniGraphs = true,
+            ShowCpuGraph = true,
+            ShowGpuGraph = true,
+            ShowCpuUsageGraph = false,
+            ShowCpuTemperatureGraph = true,
+            ShowGpuUsageGraph = true,
+            ShowGpuTemperatureGraph = false,
+            HiddenSensors = ["CpuUsage", "GpuMemoryTotal"]
+        });
+
+    AssertEqual(Visibility.Collapsed, viewModel.SensorVisibilities["CpuUsage"]);
+    AssertEqual(Visibility.Visible, viewModel.SensorVisibilities["GpuUsage"]);
+    AssertEqual(Visibility.Collapsed, viewModel.SensorVisibilities["GpuMemoryTotal"]);
+    AssertEqual(Visibility.Visible, viewModel.CpuGraphVisibility);
+    AssertEqual(Visibility.Visible, viewModel.GpuGraphVisibility);
+    AssertEqual(Visibility.Collapsed, viewModel.CpuUsageGraphVisibility);
+    AssertEqual(Visibility.Visible, viewModel.CpuTemperatureGraphVisibility);
+    AssertEqual(0, viewModel.CpuTemperatureGraphColumn);
+    AssertEqual(3, viewModel.CpuTemperatureGraphColumnSpan);
+    AssertEqual(Visibility.Visible, viewModel.GpuUsageGraphVisibility);
+    AssertEqual(Visibility.Collapsed, viewModel.GpuTemperatureGraphVisibility);
+    AssertEqual(3, viewModel.GpuUsageGraphColumnSpan);
+}
+
+static void AppliesUsageAndTemperatureColors()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            CpuUsage = 50,
+            GpuUsage = 90,
+            CpuTemperature = 50,
+            GpuTemperature = 96
+        });
+
+    AssertEqual(Colors.White, ((SolidColorBrush)viewModel.CpuUsageBrush).Color);
+    AssertEqual(Colors.Orange, ((SolidColorBrush)viewModel.GpuUsageBrush).Color);
+    AssertEqual(Color.FromRgb(70, 190, 110), ((SolidColorBrush)viewModel.CpuTemperatureBrush).Color);
+    AssertEqual(Colors.Red, ((SolidColorBrush)viewModel.GpuTemperatureBrush).Color);
+
+    viewModel.UpdateSensors(new SensorData { CpuUsage = 100 });
+    AssertEqual(Colors.Red, ((SolidColorBrush)viewModel.CpuUsageBrush).Color);
+
+    viewModel.ApplySettings(
+        new AppSettings
+        {
+            UsageWarningPercent = 80,
+            UsageDangerPercent = 95
+        });
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            CpuUsage = 80,
+            GpuUsage = 95
+        });
+
+    AssertEqual(Colors.Orange, ((SolidColorBrush)viewModel.CpuUsageBrush).Color);
+    AssertEqual(Colors.Red, ((SolidColorBrush)viewModel.GpuUsageBrush).Color);
+}
+
+static void TracksMinimumAverageAndMaximumValues()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            CpuUsage = 20,
+            CpuTemperature = 40,
+            GpuMemoryUsedGB = 4,
+            GpuMemoryTotalGB = 16
+        });
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            CpuUsage = 60,
+            CpuTemperature = 60,
+            GpuMemoryUsedGB = 8,
+            GpuMemoryTotalGB = 16
+        });
+
+    AssertEqual("Min 20.0  Moy 40.0  Max 60.0", viewModel.SensorStatistics["CpuUsage"]);
+    AssertEqual("Min 40.0  Moy 50.0  Max 60.0", viewModel.SensorStatistics["CpuTemperature"]);
+    AssertEqual("Min 25  Moy 38  Max 50", viewModel.SensorStatistics["GpuMemoryUsagePercent"]);
+}
+
+static void ResetsStatisticsAndGraphHistory()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.UpdateSensors(
+        new SensorData
+        {
+            CpuUsage = 42,
+            CpuTemperature = 55,
+            GpuUsage = 60,
+            GpuTemperature = 70
+        });
+
+    viewModel.ResetMonitoringData();
+
+    AssertEqual("Min --  Moy --  Max --", viewModel.SensorStatistics["CpuUsage"]);
+    AssertEqual(0, viewModel.CpuUsageHistoryPoints.Count);
+    AssertEqual(0, viewModel.GpuTemperatureHistoryPoints.Count);
+    AssertTrue(viewModel.CpuUsageHistoryGeometry.IsEmpty());
 }
 
 static void AssertEqual<T>(
