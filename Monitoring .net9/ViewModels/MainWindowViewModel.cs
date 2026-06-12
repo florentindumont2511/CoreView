@@ -7,31 +7,39 @@ using System.Windows.Media;
 using MediaBrush = System.Windows.Media.Brush;
 using MediaBrushes = System.Windows.Media.Brushes;
 using MediaColor = System.Windows.Media.Color;
+using MediaGeometry = System.Windows.Media.Geometry;
 using WpfPoint = System.Windows.Point;
 
 namespace Monitoring_net9.ViewModels
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
-        private static readonly CultureInfo FrenchCulture = new("fr-FR");
-
         private string currentTime = string.Empty;
         private string currentDate = string.Empty;
+        private string cpuName = "CPU";
+        private string gpuName = "GPU";
         private string cpuUsage = "--";
         private string cpuTemperature = "--";
         private string cpuClock = "--";
         private string cpuPower = "--";
         private string cpuTension = "--";
         private string ramUsage = "--";
+        private string ramTotal = "--";
+        private string ramUsagePercent = "--";
+        private string ramClock = "--";
         private string gpuUsage = "--";
         private string gpuTemperature = "--";
         private string gpuMemory = "--";
+        private string gpuMemoryTotal = "--";
+        private string gpuMemoryUsagePercent = "--";
         private string gpuClock = "--";
         private string gpuHotspot = "--";
         private string gpuMemoryJunction = "--";
         private string gpuPower = "--";
         private string gpuTension = "--";
         private string gpuTensionUnit = string.Empty;
+        private string fps = "--";
+        private string totalPower = "--";
         private string historyDurationLabel = "60s";
         private string hwInfoStatus = "HWiNFO inconnu";
         private string cpuTemperatureAxisLabel = "90°C";
@@ -41,17 +49,51 @@ namespace Monitoring_net9.ViewModels
         private double cpuDangerTemperature = 90;
         private double gpuWarningTemperature = 80;
         private double gpuDangerTemperature = 95;
+        private double usageWarningPercent = 90;
+        private double usageDangerPercent = 100;
         private int historyDurationSeconds = 60;
+        private CultureInfo dateTimeCulture = new("fr-FR");
+        private string timeFormat = "HH:mm:ss";
         private Visibility advancedSensorsVisibility = Visibility.Visible;
         private Visibility miniGraphsVisibility = Visibility.Visible;
+        private Visibility cpuGraphVisibility = Visibility.Visible;
+        private Visibility gpuGraphVisibility = Visibility.Visible;
+        private Visibility cpuUsageGraphVisibility = Visibility.Visible;
+        private Visibility cpuTemperatureGraphVisibility = Visibility.Visible;
+        private Visibility gpuUsageGraphVisibility = Visibility.Visible;
+        private Visibility gpuTemperatureGraphVisibility = Visibility.Visible;
+        private int cpuUsageGraphColumnSpan = 1;
+        private int cpuTemperatureGraphColumn = 2;
+        private int cpuTemperatureGraphColumnSpan = 1;
+        private int gpuUsageGraphColumnSpan = 1;
+        private int gpuTemperatureGraphColumn = 2;
+        private int gpuTemperatureGraphColumnSpan = 1;
+        private IReadOnlyDictionary<string, Visibility> sensorVisibilities =
+            SensorOptionDefinitions.All.ToDictionary(
+                option => option.Id,
+                _ => Visibility.Visible);
+        private IReadOnlyDictionary<string, string> sensorStatistics =
+            SensorOptionDefinitions.All.ToDictionary(
+                option => option.Id,
+                _ => "Min --  Moy --  Max --");
         private PointCollection cpuUsageHistoryPoints = [];
         private PointCollection cpuUsageAreaPoints = [];
         private PointCollection cpuTemperatureHistoryPoints = [];
         private PointCollection gpuUsageHistoryPoints = [];
         private PointCollection gpuUsageAreaPoints = [];
         private PointCollection gpuTemperatureHistoryPoints = [];
+        private MediaGeometry cpuUsageHistoryGeometry = MediaGeometry.Empty;
+        private MediaGeometry cpuUsageAreaGeometry = MediaGeometry.Empty;
+        private MediaGeometry cpuTemperatureHistoryGeometry = MediaGeometry.Empty;
+        private MediaGeometry gpuUsageHistoryGeometry = MediaGeometry.Empty;
+        private MediaGeometry gpuUsageAreaGeometry = MediaGeometry.Empty;
+        private MediaGeometry gpuTemperatureHistoryGeometry = MediaGeometry.Empty;
         private MediaBrush cpuTemperatureBrush = MediaBrushes.White;
         private MediaBrush gpuTemperatureBrush = MediaBrushes.White;
+        private MediaBrush cpuUsageBrush = MediaBrushes.White;
+        private MediaBrush gpuUsageBrush = MediaBrushes.White;
+        private MediaBrush cpuUsageAreaBrush = BrushFromArgb(48, 255, 255, 255);
+        private MediaBrush gpuUsageAreaBrush = BrushFromArgb(48, 255, 255, 255);
         private MediaBrush hwInfoStatusBrush = BrushFromRgb(170, 170, 170);
         private MediaBrush dashboardBrush =
             BrushFromRgb(21, 21, 21);
@@ -75,6 +117,7 @@ namespace Monitoring_net9.ViewModels
         private readonly Queue<double> cpuTemperatureHistory = new();
         private readonly Queue<double> gpuUsageHistory = new();
         private readonly Queue<double> gpuTemperatureHistory = new();
+        private readonly Dictionary<string, RunningStatistics> runningStatistics = [];
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -88,6 +131,18 @@ namespace Monitoring_net9.ViewModels
         {
             get => currentDate;
             private set => SetProperty(ref currentDate, value);
+        }
+
+        public string CpuName
+        {
+            get => cpuName;
+            private set => SetProperty(ref cpuName, value);
+        }
+
+        public string GpuName
+        {
+            get => gpuName;
+            private set => SetProperty(ref gpuName, value);
         }
 
         public string CpuUsage
@@ -126,6 +181,24 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref ramUsage, value);
         }
 
+        public string RamTotal
+        {
+            get => ramTotal;
+            private set => SetProperty(ref ramTotal, value);
+        }
+
+        public string RamUsagePercent
+        {
+            get => ramUsagePercent;
+            private set => SetProperty(ref ramUsagePercent, value);
+        }
+
+        public string RamClock
+        {
+            get => ramClock;
+            private set => SetProperty(ref ramClock, value);
+        }
+
         public string GpuUsage
         {
             get => gpuUsage;
@@ -142,6 +215,18 @@ namespace Monitoring_net9.ViewModels
         {
             get => gpuMemory;
             private set => SetProperty(ref gpuMemory, value);
+        }
+
+        public string GpuMemoryTotal
+        {
+            get => gpuMemoryTotal;
+            private set => SetProperty(ref gpuMemoryTotal, value);
+        }
+
+        public string GpuMemoryUsagePercent
+        {
+            get => gpuMemoryUsagePercent;
+            private set => SetProperty(ref gpuMemoryUsagePercent, value);
         }
 
         public string GpuClock
@@ -180,6 +265,18 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref gpuTensionUnit, value);
         }
 
+        public string Fps
+        {
+            get => fps;
+            private set => SetProperty(ref fps, value);
+        }
+
+        public string TotalPower
+        {
+            get => totalPower;
+            private set => SetProperty(ref totalPower, value);
+        }
+
         public string HistoryDurationLabel
         {
             get => historyDurationLabel;
@@ -216,6 +313,30 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref gpuTemperatureBrush, value);
         }
 
+        public MediaBrush CpuUsageBrush
+        {
+            get => cpuUsageBrush;
+            private set => SetProperty(ref cpuUsageBrush, value);
+        }
+
+        public MediaBrush GpuUsageBrush
+        {
+            get => gpuUsageBrush;
+            private set => SetProperty(ref gpuUsageBrush, value);
+        }
+
+        public MediaBrush CpuUsageAreaBrush
+        {
+            get => cpuUsageAreaBrush;
+            private set => SetProperty(ref cpuUsageAreaBrush, value);
+        }
+
+        public MediaBrush GpuUsageAreaBrush
+        {
+            get => gpuUsageAreaBrush;
+            private set => SetProperty(ref gpuUsageAreaBrush, value);
+        }
+
         public MediaBrush HwInfoStatusBrush
         {
             get => hwInfoStatusBrush;
@@ -238,6 +359,90 @@ namespace Monitoring_net9.ViewModels
         {
             get => miniGraphsVisibility;
             private set => SetProperty(ref miniGraphsVisibility, value);
+        }
+
+        public Visibility CpuGraphVisibility
+        {
+            get => cpuGraphVisibility;
+            private set => SetProperty(ref cpuGraphVisibility, value);
+        }
+
+        public Visibility GpuGraphVisibility
+        {
+            get => gpuGraphVisibility;
+            private set => SetProperty(ref gpuGraphVisibility, value);
+        }
+
+        public Visibility CpuUsageGraphVisibility
+        {
+            get => cpuUsageGraphVisibility;
+            private set => SetProperty(ref cpuUsageGraphVisibility, value);
+        }
+
+        public Visibility CpuTemperatureGraphVisibility
+        {
+            get => cpuTemperatureGraphVisibility;
+            private set => SetProperty(ref cpuTemperatureGraphVisibility, value);
+        }
+
+        public Visibility GpuUsageGraphVisibility
+        {
+            get => gpuUsageGraphVisibility;
+            private set => SetProperty(ref gpuUsageGraphVisibility, value);
+        }
+
+        public Visibility GpuTemperatureGraphVisibility
+        {
+            get => gpuTemperatureGraphVisibility;
+            private set => SetProperty(ref gpuTemperatureGraphVisibility, value);
+        }
+
+        public int CpuUsageGraphColumnSpan
+        {
+            get => cpuUsageGraphColumnSpan;
+            private set => SetProperty(ref cpuUsageGraphColumnSpan, value);
+        }
+
+        public int CpuTemperatureGraphColumn
+        {
+            get => cpuTemperatureGraphColumn;
+            private set => SetProperty(ref cpuTemperatureGraphColumn, value);
+        }
+
+        public int CpuTemperatureGraphColumnSpan
+        {
+            get => cpuTemperatureGraphColumnSpan;
+            private set => SetProperty(ref cpuTemperatureGraphColumnSpan, value);
+        }
+
+        public int GpuUsageGraphColumnSpan
+        {
+            get => gpuUsageGraphColumnSpan;
+            private set => SetProperty(ref gpuUsageGraphColumnSpan, value);
+        }
+
+        public int GpuTemperatureGraphColumn
+        {
+            get => gpuTemperatureGraphColumn;
+            private set => SetProperty(ref gpuTemperatureGraphColumn, value);
+        }
+
+        public int GpuTemperatureGraphColumnSpan
+        {
+            get => gpuTemperatureGraphColumnSpan;
+            private set => SetProperty(ref gpuTemperatureGraphColumnSpan, value);
+        }
+
+        public IReadOnlyDictionary<string, Visibility> SensorVisibilities
+        {
+            get => sensorVisibilities;
+            private set => SetProperty(ref sensorVisibilities, value);
+        }
+
+        public IReadOnlyDictionary<string, string> SensorStatistics
+        {
+            get => sensorStatistics;
+            private set => SetProperty(ref sensorStatistics, value);
         }
 
         public PointCollection CpuUsageHistoryPoints
@@ -274,6 +479,42 @@ namespace Monitoring_net9.ViewModels
         {
             get => gpuTemperatureHistoryPoints;
             private set => SetProperty(ref gpuTemperatureHistoryPoints, value);
+        }
+
+        public MediaGeometry CpuUsageHistoryGeometry
+        {
+            get => cpuUsageHistoryGeometry;
+            private set => SetProperty(ref cpuUsageHistoryGeometry, value);
+        }
+
+        public MediaGeometry CpuUsageAreaGeometry
+        {
+            get => cpuUsageAreaGeometry;
+            private set => SetProperty(ref cpuUsageAreaGeometry, value);
+        }
+
+        public MediaGeometry CpuTemperatureHistoryGeometry
+        {
+            get => cpuTemperatureHistoryGeometry;
+            private set => SetProperty(ref cpuTemperatureHistoryGeometry, value);
+        }
+
+        public MediaGeometry GpuUsageHistoryGeometry
+        {
+            get => gpuUsageHistoryGeometry;
+            private set => SetProperty(ref gpuUsageHistoryGeometry, value);
+        }
+
+        public MediaGeometry GpuUsageAreaGeometry
+        {
+            get => gpuUsageAreaGeometry;
+            private set => SetProperty(ref gpuUsageAreaGeometry, value);
+        }
+
+        public MediaGeometry GpuTemperatureHistoryGeometry
+        {
+            get => gpuTemperatureHistoryGeometry;
+            private set => SetProperty(ref gpuTemperatureHistoryGeometry, value);
         }
 
         public MediaBrush DashboardBrush
@@ -332,10 +573,23 @@ namespace Monitoring_net9.ViewModels
 
         public void ApplySettings(AppSettings settings)
         {
-            cpuWarningTemperature = settings.CpuWarningTemperature;
-            cpuDangerTemperature = settings.CpuDangerTemperature;
-            gpuWarningTemperature = settings.GpuWarningTemperature;
-            gpuDangerTemperature = settings.GpuDangerTemperature;
+            cpuWarningTemperature =
+                GetFiniteOrDefault(settings.CpuWarningTemperature, 70);
+            cpuDangerTemperature =
+                GetFiniteOrDefault(settings.CpuDangerTemperature, 90);
+            gpuWarningTemperature =
+                GetFiniteOrDefault(settings.GpuWarningTemperature, 80);
+            gpuDangerTemperature =
+                GetFiniteOrDefault(settings.GpuDangerTemperature, 95);
+            usageWarningPercent =
+                Math.Clamp(GetFiniteOrDefault(settings.UsageWarningPercent, 90), 0, 99);
+            usageDangerPercent =
+                Math.Clamp(GetFiniteOrDefault(settings.UsageDangerPercent, 100), 1, 100);
+
+            if (usageDangerPercent <= usageWarningPercent)
+            {
+                usageDangerPercent = Math.Min(100, usageWarningPercent + 1);
+            }
             historyDurationSeconds =
                 Math.Clamp(settings.HistoryDurationSeconds, 30, 300);
             HistoryDurationLabel =
@@ -347,19 +601,119 @@ namespace Monitoring_net9.ViewModels
             GpuTemperatureAxisLabel =
                 $"{gpuDangerTemperature:F0}°C";
 
-            DashboardScale = Math.Clamp(settings.DashboardScale, 0.75, 1.35);
+            DashboardScale =
+                Math.Clamp(GetFiniteOrDefault(settings.DashboardScale, 1.0), 0.75, 1.35);
             AdvancedSensorsVisibility =
                 settings.ShowAdvancedSensors ? Visibility.Visible : Visibility.Collapsed;
             MiniGraphsVisibility =
                 settings.ShowMiniGraphs ? Visibility.Visible : Visibility.Collapsed;
+            bool showCpuUsageGraph =
+                settings.ShowMiniGraphs &&
+                settings.ShowCpuGraph &&
+                settings.ShowCpuUsageGraph;
+            bool showCpuTemperatureGraph =
+                settings.ShowMiniGraphs &&
+                settings.ShowCpuGraph &&
+                settings.ShowCpuTemperatureGraph;
+            bool showGpuUsageGraph =
+                settings.ShowMiniGraphs &&
+                settings.ShowGpuGraph &&
+                settings.ShowGpuUsageGraph;
+            bool showGpuTemperatureGraph =
+                settings.ShowMiniGraphs &&
+                settings.ShowGpuGraph &&
+                settings.ShowGpuTemperatureGraph;
 
+            CpuUsageGraphVisibility =
+                showCpuUsageGraph ? Visibility.Visible : Visibility.Collapsed;
+            CpuTemperatureGraphVisibility =
+                showCpuTemperatureGraph ? Visibility.Visible : Visibility.Collapsed;
+            GpuUsageGraphVisibility =
+                showGpuUsageGraph ? Visibility.Visible : Visibility.Collapsed;
+            GpuTemperatureGraphVisibility =
+                showGpuTemperatureGraph ? Visibility.Visible : Visibility.Collapsed;
+            CpuUsageGraphColumnSpan = showCpuTemperatureGraph ? 1 : 3;
+            CpuTemperatureGraphColumn = showCpuUsageGraph ? 2 : 0;
+            CpuTemperatureGraphColumnSpan = showCpuUsageGraph ? 1 : 3;
+            GpuUsageGraphColumnSpan = showGpuTemperatureGraph ? 1 : 3;
+            GpuTemperatureGraphColumn = showGpuUsageGraph ? 2 : 0;
+            GpuTemperatureGraphColumnSpan = showGpuUsageGraph ? 1 : 3;
+            CpuGraphVisibility =
+                showCpuUsageGraph || showCpuTemperatureGraph
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            GpuGraphVisibility =
+                showGpuUsageGraph || showGpuTemperatureGraph
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+
+            HashSet<string> hiddenSensors =
+                new(settings.HiddenSensors ?? [], StringComparer.Ordinal);
+            SensorVisibilities =
+                SensorOptionDefinitions.All.ToDictionary(
+                    option => option.Id,
+                    option => hiddenSensors.Contains(option.Id) ||
+                              (option.IsAdvanced && !settings.ShowAdvancedSensors)
+                        ? Visibility.Collapsed
+                        : Visibility.Visible);
+
+            ApplyDateTimeLanguage(settings.DateTimeLanguage);
             ApplyTheme(settings.Theme);
+            UpdateClock(DateTime.Now);
         }
 
         public void UpdateClock(DateTime now)
         {
-            CurrentTime = now.ToString("HH:mm:ss");
-            CurrentDate = now.ToString("dddd dd MMMM yyyy", FrenchCulture);
+            CurrentTime = now.ToString(timeFormat, dateTimeCulture);
+            CurrentDate = now.ToString("dddd dd MMMM yyyy", dateTimeCulture);
+        }
+
+        public void ResetMonitoringData()
+        {
+            runningStatistics.Clear();
+            cpuUsageHistory.Clear();
+            cpuTemperatureHistory.Clear();
+            gpuUsageHistory.Clear();
+            gpuTemperatureHistory.Clear();
+
+            SensorStatistics =
+                SensorOptionDefinitions.All.ToDictionary(
+                    option => option.Id,
+                    _ => "Min --  Moy --  Max --");
+
+            CpuUsageHistoryPoints = [];
+            CpuUsageAreaPoints = [];
+            CpuTemperatureHistoryPoints = [];
+            GpuUsageHistoryPoints = [];
+            GpuUsageAreaPoints = [];
+            GpuTemperatureHistoryPoints = [];
+
+            CpuUsageHistoryGeometry = MediaGeometry.Empty;
+            CpuUsageAreaGeometry = MediaGeometry.Empty;
+            CpuTemperatureHistoryGeometry = MediaGeometry.Empty;
+            GpuUsageHistoryGeometry = MediaGeometry.Empty;
+            GpuUsageAreaGeometry = MediaGeometry.Empty;
+            GpuTemperatureHistoryGeometry = MediaGeometry.Empty;
+        }
+
+        private void ApplyDateTimeLanguage(string language)
+        {
+            if (language == "English")
+            {
+                dateTimeCulture = new CultureInfo("en-US");
+                timeFormat = "hh:mm:ss tt";
+                return;
+            }
+
+            if (language == "System")
+            {
+                dateTimeCulture = CultureInfo.CurrentCulture;
+                timeFormat = dateTimeCulture.DateTimeFormat.LongTimePattern;
+                return;
+            }
+
+            dateTimeCulture = new CultureInfo("fr-FR");
+            timeFormat = "HH:mm:ss";
         }
 
         public void UpdateHwInfoStatus(bool isConnected)
@@ -377,20 +731,35 @@ namespace Monitoring_net9.ViewModels
 
         public void UpdateSensors(SensorData data)
         {
+            CpuName = FormatHardwareName(data.CpuName, "CPU");
+            GpuName = FormatHardwareName(data.GpuName, "GPU");
             CpuUsage = FormatRequired(data.CpuUsage, "F1");
             CpuTemperature = FormatOptional(data.CpuTemperature, "F1");
             CpuClock = FormatOptional(data.CpuClock / 1000, "F2");
             CpuPower = FormatOptional(data.CpuPower, "F1");
             CpuTension = FormatOptional(data.CpuTension, "F3");
             RamUsage = FormatRequired(data.RamUsed, "F1");
+            RamTotal = FormatOptional(data.RamTotal, "F1");
+            RamUsagePercent = FormatOptional(data.RamUsagePercent, "F0");
+            RamClock = FormatOptional(data.RamClock, "F0");
 
             GpuUsage = FormatRequired(data.GpuUsage, "F1");
             GpuTemperature = FormatOptional(data.GpuTemperature, "F0");
             GpuMemory = FormatRequired(data.GpuMemoryUsedGB, "F1");
+            GpuMemoryTotal = FormatOptional(data.GpuMemoryTotalGB, "F1");
+            GpuMemoryUsagePercent =
+                FormatOptional(
+                    CalculatePercent(
+                        data.GpuMemoryUsedGB,
+                        data.GpuMemoryTotalGB,
+                        data.GpuMemoryUsagePercent),
+                    "F0");
             GpuClock = FormatOptional(data.GpuClock, "F0");
             GpuHotspot = FormatOptional(data.GpuHotspot, "F1");
             GpuMemoryJunction = FormatOptional(data.GpuMemoryJunction, "F0");
             GpuPower = FormatOptional(data.GpuPower, "F1");
+            Fps = FormatOptional(data.Fps, "F0");
+            TotalPower = FormatOptional(data.TotalPower, "F1");
 
             UpdateGpuTension(data.GpuTension);
 
@@ -404,18 +773,86 @@ namespace Monitoring_net9.ViewModels
                     data.GpuTemperature,
                     gpuWarningTemperature,
                     gpuDangerTemperature);
+            (CpuUsageBrush, CpuUsageAreaBrush) =
+                GetUsageBrushes(
+                    data.CpuUsage,
+                    usageWarningPercent,
+                    usageDangerPercent);
+            (GpuUsageBrush, GpuUsageAreaBrush) =
+                GetUsageBrushes(
+                    data.GpuUsage,
+                    usageWarningPercent,
+                    usageDangerPercent);
 
+            UpdateStatistics(data);
             UpdateHistory(data);
+        }
+
+        private void UpdateStatistics(SensorData data)
+        {
+            double vramUsagePercent =
+                CalculatePercent(
+                    data.GpuMemoryUsedGB,
+                    data.GpuMemoryTotalGB,
+                    data.GpuMemoryUsagePercent);
+            double gpuTensionDisplay =
+                data.GpuTension > 0 && data.GpuTension < 1
+                    ? data.GpuTension * 1000
+                    : data.GpuTension;
+
+            AddStatistic("CpuUsage", data.CpuUsage, "F1", true);
+            AddStatistic("CpuTemperature", data.CpuTemperature, "F1");
+            AddStatistic("RamUsed", data.RamUsed, "F1", true);
+            AddStatistic("CpuClock", data.CpuClock / 1000, "F2");
+            AddStatistic("CpuPower", data.CpuPower, "F1");
+            AddStatistic("CpuTension", data.CpuTension, "F3");
+            AddStatistic("RamUsagePercent", data.RamUsagePercent, "F0", true);
+            AddStatistic("RamTotal", data.RamTotal, "F1");
+            AddStatistic("RamClock", data.RamClock, "F0");
+            AddStatistic("GpuUsage", data.GpuUsage, "F1", true);
+            AddStatistic("GpuTemperature", data.GpuTemperature, "F0");
+            AddStatistic("GpuMemoryUsed", data.GpuMemoryUsedGB, "F1", true);
+            AddStatistic("GpuClock", data.GpuClock, "F0");
+            AddStatistic("GpuPower", data.GpuPower, "F1");
+            AddStatistic("GpuTension", gpuTensionDisplay, data.GpuTension < 1 ? "F0" : "F3");
+            AddStatistic("GpuHotspot", data.GpuHotspot, "F1");
+            AddStatistic("TotalPower", data.TotalPower, "F1");
+            AddStatistic("GpuMemoryJunction", data.GpuMemoryJunction, "F0");
+            AddStatistic("GpuMemoryUsagePercent", vramUsagePercent, "F0", true);
+            AddStatistic("GpuMemoryTotal", data.GpuMemoryTotalGB, "F1");
+            AddStatistic("Fps", data.Fps, "F0", true);
+
+            SensorStatistics =
+                SensorOptionDefinitions.All.ToDictionary(
+                    option => option.Id,
+                    option => runningStatistics.TryGetValue(option.Id, out RunningStatistics? stats)
+                        ? stats.Format()
+                        : "Min --  Moy --  Max --");
+        }
+
+        private void AddStatistic(
+            string id,
+            double value,
+            string format,
+            bool allowZero = false)
+        {
+            if (!IsFinite(value) || value < 0 || (!allowZero && value <= 0))
+            {
+                return;
+            }
+
+            if (!runningStatistics.TryGetValue(id, out RunningStatistics? statistics))
+            {
+                statistics = new RunningStatistics(format);
+                runningStatistics[id] = statistics;
+            }
+
+            statistics.Add(value);
         }
 
         private static string FormatRequired(double value, string format)
         {
-            return value.ToString(format, CultureInfo.InvariantCulture);
-        }
-
-        private static string FormatOptional(double value, string format)
-        {
-            if (value <= 0)
+            if (!IsFinite(value))
             {
                 return "--";
             }
@@ -423,9 +860,44 @@ namespace Monitoring_net9.ViewModels
             return value.ToString(format, CultureInfo.InvariantCulture);
         }
 
+        private static string FormatHardwareName(
+            string name,
+            string fallback)
+        {
+            return string.IsNullOrWhiteSpace(name)
+                ? fallback
+                : name.Trim();
+        }
+
+        private static string FormatOptional(double value, string format)
+        {
+            if (!IsFinite(value) || value <= 0)
+            {
+                return "--";
+            }
+
+            return value.ToString(format, CultureInfo.InvariantCulture);
+        }
+
+        private static double CalculatePercent(
+            double used,
+            double total,
+            double fallback)
+        {
+            if (IsFinite(used) &&
+                IsFinite(total) &&
+                used > 0 &&
+                total > 0)
+            {
+                return Math.Clamp((used / total) * 100, 0, 100);
+            }
+
+            return fallback;
+        }
+
         private void UpdateGpuTension(double tension)
         {
-            if (tension <= 0)
+            if (!IsFinite(tension) || tension <= 0)
             {
                 GpuTension = "--";
                 GpuTensionUnit = string.Empty;
@@ -448,7 +920,7 @@ namespace Monitoring_net9.ViewModels
             double warningThreshold,
             double dangerThreshold)
         {
-            if (temperature <= 0)
+            if (!IsFinite(temperature) || temperature <= 0)
             {
                 return MediaBrushes.White;
             }
@@ -463,7 +935,31 @@ namespace Monitoring_net9.ViewModels
                 return MediaBrushes.Orange;
             }
 
-            return MediaBrushes.White;
+            return BrushFromRgb(70, 190, 110);
+        }
+
+        private static (MediaBrush Line, MediaBrush Area) GetUsageBrushes(
+            double usage,
+            double warningThreshold,
+            double dangerThreshold)
+        {
+            if (IsFinite(usage) && usage >= dangerThreshold)
+            {
+                return (
+                    MediaBrushes.Red,
+                    BrushFromArgb(64, 255, 0, 0));
+            }
+
+            if (IsFinite(usage) && usage >= warningThreshold)
+            {
+                return (
+                    MediaBrushes.Orange,
+                    BrushFromArgb(64, 255, 165, 0));
+            }
+
+            return (
+                MediaBrushes.White,
+                BrushFromArgb(48, 255, 255, 255));
         }
 
         private void UpdateHistory(SensorData data)
@@ -485,12 +981,30 @@ namespace Monitoring_net9.ViewModels
                 CreateAreaPoints(GpuUsageHistoryPoints);
             GpuTemperatureHistoryPoints =
                 CreatePoints(gpuTemperatureHistory, gpuDangerTemperature);
+
+            CpuUsageHistoryGeometry =
+                CreateSmoothGeometry(CpuUsageHistoryPoints);
+            CpuUsageAreaGeometry =
+                CreateSmoothAreaGeometry(CpuUsageHistoryPoints);
+            CpuTemperatureHistoryGeometry =
+                CreateSmoothGeometry(CpuTemperatureHistoryPoints);
+            GpuUsageHistoryGeometry =
+                CreateSmoothGeometry(GpuUsageHistoryPoints);
+            GpuUsageAreaGeometry =
+                CreateSmoothAreaGeometry(GpuUsageHistoryPoints);
+            GpuTemperatureHistoryGeometry =
+                CreateSmoothGeometry(GpuTemperatureHistoryPoints);
         }
 
         private void AddHistoryValue(
             Queue<double> history,
             double value)
         {
+            if (!IsFinite(value))
+            {
+                value = 0;
+            }
+
             history.Enqueue(Math.Max(0, value));
 
             while (history.Count > historyDurationSeconds)
@@ -505,6 +1019,9 @@ namespace Monitoring_net9.ViewModels
         {
             const double width = 320;
             const double height = 170;
+            const double topPadding = 6;
+            const double bottomPadding = 6;
+            const double graphHeight = height - topPadding - bottomPadding;
 
             var points = new PointCollection();
 
@@ -527,7 +1044,7 @@ namespace Monitoring_net9.ViewModels
                 points.Add(
                     new WpfPoint(
                         index * step,
-                        height - (ratio * height)));
+                        topPadding + ((1 - ratio) * graphHeight)));
 
                 index++;
             }
@@ -539,15 +1056,28 @@ namespace Monitoring_net9.ViewModels
             IReadOnlyCollection<double> values)
         {
             double maxValue =
-                Math.Max(25, values.Count == 0 ? 100 : values.Max());
+                Math.Max(25, values.Count == 0 ? 100 : values.Where(IsFinite).DefaultIfEmpty(0).Max());
 
             return CreatePoints(values, maxValue);
+        }
+
+        private static bool IsFinite(double value)
+        {
+            return !double.IsNaN(value) && !double.IsInfinity(value);
+        }
+
+        private static double GetFiniteOrDefault(
+            double value,
+            double fallback)
+        {
+            return IsFinite(value) ? value : fallback;
         }
 
         private static PointCollection CreateAreaPoints(
             PointCollection linePoints)
         {
             const double height = 170;
+            const double baseline = height - 6;
 
             var points = new PointCollection();
 
@@ -557,7 +1087,7 @@ namespace Monitoring_net9.ViewModels
             }
 
             points.Add(
-                new WpfPoint(linePoints[0].X, height));
+                new WpfPoint(linePoints[0].X, baseline));
 
             foreach (WpfPoint point in linePoints)
             {
@@ -565,9 +1095,94 @@ namespace Monitoring_net9.ViewModels
             }
 
             points.Add(
-                new WpfPoint(linePoints[^1].X, height));
+                new WpfPoint(linePoints[^1].X, baseline));
 
             return points;
+        }
+
+        private static MediaGeometry CreateSmoothGeometry(
+            PointCollection points)
+        {
+            if (points.Count == 0)
+            {
+                return MediaGeometry.Empty;
+            }
+
+            var geometry = new StreamGeometry();
+
+            using (StreamGeometryContext context = geometry.Open())
+            {
+                context.BeginFigure(points[0], false, false);
+                AddSmoothSegments(context, points);
+            }
+
+            geometry.Freeze();
+            return geometry;
+        }
+
+        private static MediaGeometry CreateSmoothAreaGeometry(
+            PointCollection points)
+        {
+            const double baseline = 164;
+
+            if (points.Count == 0)
+            {
+                return MediaGeometry.Empty;
+            }
+
+            var geometry = new StreamGeometry();
+
+            using (StreamGeometryContext context = geometry.Open())
+            {
+                context.BeginFigure(
+                    new WpfPoint(points[0].X, baseline),
+                    true,
+                    true);
+                context.LineTo(points[0], true, false);
+                AddSmoothSegments(context, points);
+                context.LineTo(
+                    new WpfPoint(points[^1].X, baseline),
+                    true,
+                    false);
+            }
+
+            geometry.Freeze();
+            return geometry;
+        }
+
+        private static void AddSmoothSegments(
+            StreamGeometryContext context,
+            PointCollection points)
+        {
+            if (points.Count == 1)
+            {
+                return;
+            }
+
+            const double tension = 0.18;
+
+            for (int index = 0; index < points.Count - 1; index++)
+            {
+                WpfPoint previous = index == 0 ? points[index] : points[index - 1];
+                WpfPoint current = points[index];
+                WpfPoint next = points[index + 1];
+                WpfPoint following =
+                    index + 2 < points.Count ? points[index + 2] : next;
+
+                var firstControl = new WpfPoint(
+                    current.X + ((next.X - previous.X) * tension),
+                    current.Y + ((next.Y - previous.Y) * tension));
+                var secondControl = new WpfPoint(
+                    next.X - ((following.X - current.X) * tension),
+                    next.Y - ((following.Y - current.Y) * tension));
+
+                context.BezierTo(
+                    firstControl,
+                    secondControl,
+                    next,
+                    true,
+                    false);
+            }
         }
 
         private void ApplyTheme(string theme)
@@ -638,6 +1253,36 @@ namespace Monitoring_net9.ViewModels
             PropertyChanged?.Invoke(
                 this,
                 new PropertyChangedEventArgs(propertyName));
+        }
+
+        private sealed class RunningStatistics(string format)
+        {
+            private double minimum = double.PositiveInfinity;
+            private double maximum = double.NegativeInfinity;
+            private double sum;
+            private long count;
+
+            public void Add(double value)
+            {
+                minimum = Math.Min(minimum, value);
+                maximum = Math.Max(maximum, value);
+                sum += value;
+                count++;
+            }
+
+            public string Format()
+            {
+                if (count == 0)
+                {
+                    return "Min --  Moy --  Max --";
+                }
+
+                return string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"Min {minimum.ToString(format, CultureInfo.InvariantCulture)}  " +
+                    $"Moy {(sum / count).ToString(format, CultureInfo.InvariantCulture)}  " +
+                    $"Max {maximum.ToString(format, CultureInfo.InvariantCulture)}");
+            }
         }
     }
 }

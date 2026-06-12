@@ -9,6 +9,7 @@ namespace Monitoring_net9.Services
         private const string SharedMemoryName = "Global\\HWiNFO_SENS_SM2";
 
         private MemoryMappedFile? memoryFile;
+        private DateTime lastConnectErrorLog = DateTime.MinValue;
 
         public HwInfoSharedMemHeader Header { get; private set; }
 
@@ -38,7 +39,7 @@ namespace Monitoring_net9.Services
             }
             catch (Exception ex)
             {
-                LoggerService.Log($"HWiNFO Connect Error: {ex.Message}");
+                LogConnectError(ex);
                 IsConnected = false;
 
                 return false;
@@ -148,7 +149,9 @@ namespace Monitoring_net9.Services
             foreach (var reading in Readings.Where(r => r.Value > 0))
             {
                 UpdateCpuSensor(reading);
+                UpdateMemorySensor(reading);
                 UpdateGpuSensor(reading, ref gpuPowerCore, ref gpuPowerSoc);
+                UpdateFrameRateSensor(reading);
             }
 
             Data.GpuPower = gpuPowerCore + gpuPowerSoc;
@@ -227,6 +230,25 @@ namespace Monitoring_net9.Services
             }
         }
 
+        private void UpdateMemorySensor(HwInfoReadingElement reading)
+        {
+            if (ContainsLabel(reading, "Memory Clock") ||
+                ContainsLabel(reading, "DRAM Frequency"))
+            {
+                Data.RamClock = reading.Value;
+            }
+        }
+
+        private void UpdateFrameRateSensor(HwInfoReadingElement reading)
+        {
+            if (ContainsLabel(reading, "Framerate") ||
+                ContainsLabel(reading, "Frame Rate") ||
+                ContainsLabel(reading, "FPS"))
+            {
+                Data.Fps = reading.Value;
+            }
+        }
+
         private static bool ContainsLabel(
             HwInfoReadingElement reading,
             string label)
@@ -234,6 +256,17 @@ namespace Monitoring_net9.Services
             return reading.LabelOrig?.Contains(
                 label,
                 StringComparison.OrdinalIgnoreCase) == true;
+        }
+
+        private void LogConnectError(Exception ex)
+        {
+            if (DateTime.Now - lastConnectErrorLog < TimeSpan.FromSeconds(10))
+            {
+                return;
+            }
+
+            lastConnectErrorLog = DateTime.Now;
+            LoggerService.Log($"HWiNFO Connect Error: {ex.Message}");
         }
     }
 }

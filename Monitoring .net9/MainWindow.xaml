@@ -24,98 +24,172 @@
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="0" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="18"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="26"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="24"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="1.30*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.30*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.30*"/>
                 <RowDefinition Height="14"/>
-                <RowDefinition Height="1.7*"/>
+                <RowDefinition Height="1.30*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0"
-                       Grid.ColumnSpan="3"
-                       Text="{Binding CurrentTime}"
-                       FontSize="62"
-                       FontWeight="Bold"
-                       Foreground="{Binding HeaderBrush}"/>
+            <Grid Grid.Row="0"
+                  Grid.ColumnSpan="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="28"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="1"
-                       Grid.ColumnSpan="3"
-                       Text="{Binding CurrentDate}"
-                       FontSize="52"
-                       Foreground="{Binding SecondaryTextBrush}"/>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding CurrentTime}"
+                           FontSize="52"
+                           FontWeight="Bold"
+                           Foreground="{Binding HeaderBrush}"
+                           VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Column="2"
+                           Text="{Binding CurrentDate}"
+                           FontSize="38"
+                           Foreground="{Binding SecondaryTextBrush}"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+            </Grid>
 
             <TextBlock Grid.Row="3"
-                       Grid.ColumnSpan="3"
-                       Text="CPU / RAM"
-                       FontSize="44"
-                       FontWeight="Bold"
-                       Foreground="{Binding HeaderBrush}"/>
+                       Grid.ColumnSpan="2"
+                       Text="{Binding CpuName}"
+                       FontSize="36"
+                       FontWeight="SemiBold"
+                       Foreground="{Binding SecondaryTextBrush}"
+                       TextTrimming="CharacterEllipsis"/>
+
+            <TextBlock Grid.Row="3"
+                       Grid.Column="2"
+                       Text="{Binding HwInfoStatus}"
+                       Foreground="{Binding HwInfoStatusBrush}"
+                       FontSize="26"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
 
             <controls:MetricTile Grid.Row="5"
                                  Grid.Column="0"
+                                 Margin="0,0,5,0"
                                  Title="CPU Usage"
                                  Value="{Binding CpuUsage}"
                                  Unit="%"
+                                 Statistics="{Binding SensorStatistics[CpuUsage]}"
+                                 ValueBrush="{Binding CpuUsageBrush}"
+                                 Visibility="{Binding SensorVisibilities[CpuUsage]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="5"
-                                 Grid.Column="2"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
                                  Title="CPU Temp"
                                  Value="{Binding CpuTemperature}"
                                  Unit="&#176;C"
+                                 Statistics="{Binding SensorStatistics[CpuTemperature]}"
+                                 Visibility="{Binding SensorVisibilities[CpuTemperature]}"
                                  ValueBrush="{Binding CpuTemperatureBrush}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
-            <controls:MetricTile Grid.Row="7"
-                                 Grid.Column="0"
+            <controls:MetricTile Grid.Row="5"
+                                 Grid.Column="2"
+                                 Margin="5,0,0,0"
                                  Title="RAM"
                                  Value="{Binding RamUsage}"
                                  Unit="GB"
+                                 Statistics="{Binding SensorStatistics[RamUsed]}"
+                                 Visibility="{Binding SensorVisibilities[RamUsed]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="7"
+                                 Grid.Column="0"
+                                 Margin="0,0,5,0"
+                                 Title="CPU Clock"
+                                 Value="{Binding CpuClock}"
+                                 Unit="GHz"
+                                 Statistics="{Binding SensorStatistics[CpuClock]}"
+                                 Visibility="{Binding SensorVisibilities[CpuClock]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="7"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="CPU Power"
+                                 Value="{Binding CpuPower}"
+                                 Unit="W"
+                                 Statistics="{Binding SensorStatistics[CpuPower]}"
+                                 Visibility="{Binding SensorVisibilities[CpuPower]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="7"
                                  Grid.Column="2"
-                                 Title="CPU Clock"
-                                 Value="{Binding CpuClock}"
-                                 Unit="GHz"
+                                 Margin="5,0,0,0"
+                                 Title="CPU Tension"
+                                 Value="{Binding CpuTension}"
+                                 Unit="V"
+                                 Statistics="{Binding SensorStatistics[CpuTension]}"
+                                 Visibility="{Binding SensorVisibilities[CpuTension]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="9"
                                  Grid.Column="0"
-                                 Title="CPU Power"
-                                 Value="{Binding CpuPower}"
-                                 Unit="W"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 Margin="0,0,5,0"
+                                 Title="RAM Usage"
+                                 Value="{Binding RamUsagePercent}"
+                                 Unit="%"
+                                 Statistics="{Binding SensorStatistics[RamUsagePercent]}"
+                                 Visibility="{Binding SensorVisibilities[RamUsagePercent]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="9"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="RAM Total"
+                                 Value="{Binding RamTotal}"
+                                 Unit="GB"
+                                 Statistics="{Binding SensorStatistics[RamTotal]}"
+                                 Visibility="{Binding SensorVisibilities[RamTotal]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="9"
                                  Grid.Column="2"
-                                 Title="CPU Tension"
-                                 Value="{Binding CpuTension}"
-                                 Unit="V"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 Margin="5,0,0,0"
+                                 Title="RAM Clock"
+                                 Value="{Binding RamClock}"
+                                 Unit="MHz"
+                                 Statistics="{Binding SensorStatistics[RamClock]}"
+                                 Visibility="{Binding SensorVisibilities[RamClock]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
@@ -125,89 +199,80 @@
                     Background="{Binding TileBrush}"
                     CornerRadius="10"
                     Padding="14"
-                    Visibility="{Binding MiniGraphsVisibility}">
-                <StackPanel>
-                    <TextBlock Foreground="{Binding TitleBrush}"
+                    Visibility="{Binding CpuGraphVisibility}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Foreground="{Binding TitleBrush}"
                                FontSize="44"
                                Margin="0,0,0,4">
                         <Run Text="CPU "/>
                         <Run Text="{Binding HistoryDurationLabel, Mode=OneWay}"/>
                     </TextBlock>
-                    <StackPanel Orientation="Horizontal"
-                                Margin="0,0,0,8">
-                        <Line X1="0"
-                              X2="28"
-                              Y1="8"
-                              Y2="8"
-                              Stroke="{Binding ChartLineBrush}"
-                              StrokeThickness="4"/>
-                        <TextBlock Text="Usage"
-                                   Foreground="{Binding UnitBrush}"
-                                   FontSize="17"
-                                   Margin="8,0,18,0"/>
-                        <Line X1="0"
-                              X2="28"
-                              Y1="8"
-                              Y2="8"
-                              Stroke="{Binding CpuTemperatureBrush}"
-                              StrokeThickness="3"/>
-                        <TextBlock Text="Temp"
-                                   Foreground="{Binding UnitBrush}"
-                                   FontSize="17"
-                                   Margin="8,0,0,0"/>
-                    </StackPanel>
-                    <Viewbox Stretch="Fill"
-                             Height="170">
-                        <Grid Width="320"
-                              Height="170">
-                            <Line X1="0"
-                                  X2="320"
-                                  Y1="0"
-                                  Y2="0"
-                                  Stroke="{Binding ChartGridBrush}"
-                                  StrokeThickness="1"/>
-                            <Line X1="0"
-                                  X2="320"
-                                  Y1="85"
-                                  Y2="85"
-                                  Stroke="{Binding ChartGridBrush}"
-                                  StrokeThickness="1"/>
-                            <Line X1="0"
-                                  X2="320"
-                                  Y1="170"
-                                  Y2="170"
-                                  Stroke="{Binding ChartGridBrush}"
-                                  StrokeThickness="1"/>
-                            <TextBlock Text="100%"
-                                       Foreground="{Binding UnitBrush}"
-                                       FontSize="12"
-                                       Opacity="0.75"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Top"/>
-                            <TextBlock Text="{Binding CpuTemperatureAxisLabel}"
-                                       Foreground="{Binding UnitBrush}"
-                                       FontSize="12"
-                                       Opacity="0.75"
-                                       HorizontalAlignment="Right"
-                                       VerticalAlignment="Top"/>
-                            <TextBlock Text="0"
-                                       Foreground="{Binding UnitBrush}"
-                                       FontSize="12"
-                                       Opacity="0.75"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Bottom"/>
-                            <Polygon Points="{Binding CpuUsageAreaPoints}"
-                                     Fill="{Binding ChartAreaBrush}"/>
-                            <Polyline Points="{Binding CpuUsageHistoryPoints}"
-                                      Stroke="{Binding ChartLineBrush}"
-                                      StrokeThickness="4"/>
-                            <Polyline Points="{Binding CpuTemperatureHistoryPoints}"
-                                      Stroke="{Binding CpuTemperatureBrush}"
-                                      StrokeThickness="3"
-                                      Opacity="0.75"/>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="18"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0"
+                              Grid.ColumnSpan="{Binding CpuUsageGraphColumnSpan}"
+                              Visibility="{Binding CpuUsageGraphVisibility}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Usage"
+                                       Foreground="{Binding CpuUsageBrush}"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,4"/>
+                            <Viewbox Grid.Row="1" Stretch="Fill">
+                                <Grid Width="320" Height="170">
+                                    <Line X1="0" X2="320" Y1="6" Y2="6" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="85" Y2="85" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="164" Y2="164" Stroke="{Binding ChartGridBrush}"/>
+                                    <TextBlock Text="100%" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75"/>
+                                    <TextBlock Text="0%" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75" VerticalAlignment="Bottom"/>
+                                    <Path Data="{Binding CpuUsageAreaGeometry}" Fill="{Binding CpuUsageAreaBrush}"/>
+                                    <Path Data="{Binding CpuUsageHistoryGeometry}"
+                                          Stroke="{Binding CpuUsageBrush}" StrokeThickness="4"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                                </Grid>
+                            </Viewbox>
                         </Grid>
-                    </Viewbox>
-                </StackPanel>
+
+                        <Grid Grid.Column="{Binding CpuTemperatureGraphColumn}"
+                              Grid.ColumnSpan="{Binding CpuTemperatureGraphColumnSpan}"
+                              Visibility="{Binding CpuTemperatureGraphVisibility}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Température"
+                                       Foreground="{Binding CpuTemperatureBrush}"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,4"/>
+                            <Viewbox Grid.Row="1" Stretch="Fill">
+                                <Grid Width="320" Height="170">
+                                    <Line X1="0" X2="320" Y1="6" Y2="6" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="85" Y2="85" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="164" Y2="164" Stroke="{Binding ChartGridBrush}"/>
+                                    <TextBlock Text="{Binding CpuTemperatureAxisLabel}" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75"/>
+                                    <TextBlock Text="0°C" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75" VerticalAlignment="Bottom"/>
+                                    <Path Data="{Binding CpuTemperatureHistoryGeometry}"
+                                          Stroke="{Binding CpuTemperatureBrush}" StrokeThickness="3"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                                </Grid>
+                            </Viewbox>
+                        </Grid>
+                    </Grid>
+                </Grid>
             </Border>
 
         </Grid>
@@ -216,22 +281,22 @@
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="16"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.225*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.225*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.225*"/>
                 <RowDefinition Height="8"/>
-                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1.225*"/>
                 <RowDefinition Height="14"/>
-                <RowDefinition Height="1.7*"/>
+                <RowDefinition Height="1.45*"/>
             </Grid.RowDefinitions>
 
             <Button x:Name="SettingsButton"
@@ -250,97 +315,158 @@
                     Grid.Column="2"
                     Panel.ZIndex="999"/>
 
-            <TextBlock Grid.Column="2"
-                       Text="{Binding HwInfoStatus}"
-                       Foreground="{Binding HwInfoStatusBrush}"
-                       FontSize="26"
-                       FontWeight="SemiBold"
-                       HorizontalAlignment="Right"
-                       VerticalAlignment="Top"
-                       Margin="0,84,12,0"
-                       Panel.ZIndex="999"/>
-
             <TextBlock Grid.Row="0"
                        Grid.ColumnSpan="3"
-                       Text="GPU"
-                       FontSize="52"
-                       FontWeight="Bold"
-                       Foreground="{Binding HeaderBrush}"
-                       Margin="0,0,0,10"/>
+                       Text="{Binding GpuName}"
+                       FontSize="36"
+                       FontWeight="SemiBold"
+                       Foreground="{Binding SecondaryTextBrush}"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="0,18,190,10"/>
 
             <controls:MetricTile Grid.Row="2"
                                  Grid.Column="0"
+                                 Margin="0,0,5,0"
                                  Title="GPU Usage"
                                  Value="{Binding GpuUsage}"
                                  Unit="%"
+                                 Statistics="{Binding SensorStatistics[GpuUsage]}"
+                                 ValueBrush="{Binding GpuUsageBrush}"
+                                 Visibility="{Binding SensorVisibilities[GpuUsage]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="2"
-                                 Grid.Column="2"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
                                  Title="GPU Temp"
                                  Value="{Binding GpuTemperature}"
                                  Unit="&#176;C"
+                                 Statistics="{Binding SensorStatistics[GpuTemperature]}"
+                                 Visibility="{Binding SensorVisibilities[GpuTemperature]}"
                                  ValueBrush="{Binding GpuTemperatureBrush}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
-            <controls:MetricTile Grid.Row="4"
-                                 Grid.Column="0"
-                                 Title="GPU Clock"
-                                 Value="{Binding GpuClock}"
-                                 Unit="MHz"
-                                 TileBrush="{Binding TileBrush}"
-                                 TitleBrush="{Binding TitleBrush}"
-                                 UnitBrush="{Binding UnitBrush}"/>
-
-            <controls:MetricTile Grid.Row="4"
+            <controls:MetricTile Grid.Row="2"
                                  Grid.Column="2"
+                                 Margin="5,0,0,0"
                                  Title="VRAM"
                                  Value="{Binding GpuMemory}"
                                  Unit="GB"
+                                 Statistics="{Binding SensorStatistics[GpuMemoryUsed]}"
+                                 Visibility="{Binding SensorVisibilities[GpuMemoryUsed]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
-            <controls:MetricTile Grid.Row="6"
+            <controls:MetricTile Grid.Row="4"
                                  Grid.Column="0"
-                                 Title="GPU Hotspot"
-                                 Value="{Binding GpuHotspot}"
-                                 Unit="&#176;C"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 Margin="0,0,5,0"
+                                 Title="GPU Clock"
+                                 Value="{Binding GpuClock}"
+                                 Unit="MHz"
+                                 Statistics="{Binding SensorStatistics[GpuClock]}"
+                                 Visibility="{Binding SensorVisibilities[GpuClock]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
-            <controls:MetricTile Grid.Row="6"
-                                 Grid.Column="2"
-                                 Title="Memory Junction"
-                                 Value="{Binding GpuMemoryJunction}"
-                                 Unit="&#176;C"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
-                                 TileBrush="{Binding TileBrush}"
-                                 TitleBrush="{Binding TitleBrush}"
-                                 UnitBrush="{Binding UnitBrush}"/>
-
-            <controls:MetricTile Grid.Row="8"
-                                 Grid.Column="0"
+            <controls:MetricTile Grid.Row="4"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
                                  Title="GPU Power"
                                  Value="{Binding GpuPower}"
                                  Unit="W"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 Statistics="{Binding SensorStatistics[GpuPower]}"
+                                 Visibility="{Binding SensorVisibilities[GpuPower]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="4"
+                                 Grid.Column="2"
+                                 Margin="5,0,0,0"
+                                 Title="GPU Tension"
+                                 Value="{Binding GpuTension}"
+                                 Unit="{Binding GpuTensionUnit}"
+                                 Statistics="{Binding SensorStatistics[GpuTension]}"
+                                 Visibility="{Binding SensorVisibilities[GpuTension]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="6"
+                                 Grid.Column="0"
+                                 Margin="0,0,5,0"
+                                 Title="GPU Hotspot"
+                                 Value="{Binding GpuHotspot}"
+                                 Unit="&#176;C"
+                                 Statistics="{Binding SensorStatistics[GpuHotspot]}"
+                                 Visibility="{Binding SensorVisibilities[GpuHotspot]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="6"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="Total Power"
+                                 Value="{Binding TotalPower}"
+                                 Unit="W"
+                                 Statistics="{Binding SensorStatistics[TotalPower]}"
+                                 Visibility="{Binding SensorVisibilities[TotalPower]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="6"
+                                 Grid.Column="2"
+                                 Margin="5,0,0,0"
+                                 Title="Memory Junction"
+                                 Value="{Binding GpuMemoryJunction}"
+                                 Unit="&#176;C"
+                                 Statistics="{Binding SensorStatistics[GpuMemoryJunction]}"
+                                 Visibility="{Binding SensorVisibilities[GpuMemoryJunction]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="8"
+                                 Grid.Column="0"
+                                 Margin="0,0,5,0"
+                                 Title="VRAM Usage"
+                                 Value="{Binding GpuMemoryUsagePercent}"
+                                 Unit="%"
+                                 Statistics="{Binding SensorStatistics[GpuMemoryUsagePercent]}"
+                                 Visibility="{Binding SensorVisibilities[GpuMemoryUsagePercent]}"
+                                 TileBrush="{Binding TileBrush}"
+                                 TitleBrush="{Binding TitleBrush}"
+                                 UnitBrush="{Binding UnitBrush}"/>
+
+            <controls:MetricTile Grid.Row="8"
+                                 Grid.Column="1"
+                                 Margin="5,0,5,0"
+                                 Title="VRAM Total"
+                                 Value="{Binding GpuMemoryTotal}"
+                                 Unit="GB"
+                                 Statistics="{Binding SensorStatistics[GpuMemoryTotal]}"
+                                 Visibility="{Binding SensorVisibilities[GpuMemoryTotal]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
 
             <controls:MetricTile Grid.Row="8"
                                  Grid.Column="2"
-                                 Title="GPU Tension"
-                                 Value="{Binding GpuTension}"
-                                 Unit="{Binding GpuTensionUnit}"
-                                 Visibility="{Binding AdvancedSensorsVisibility}"
+                                 Margin="5,0,0,0"
+                                 Title="FPS"
+                                 Value="{Binding Fps}"
+                                 Unit=""
+                                 Statistics="{Binding SensorStatistics[Fps]}"
+                                 Visibility="{Binding SensorVisibilities[Fps]}"
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
@@ -350,89 +476,80 @@
                     Background="{Binding TileBrush}"
                     CornerRadius="10"
                     Padding="14"
-                    Visibility="{Binding MiniGraphsVisibility}">
-                <StackPanel>
-                    <TextBlock Foreground="{Binding TitleBrush}"
+                    Visibility="{Binding GpuGraphVisibility}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Foreground="{Binding TitleBrush}"
                                FontSize="44"
                                Margin="0,0,0,4">
                         <Run Text="GPU "/>
                         <Run Text="{Binding HistoryDurationLabel, Mode=OneWay}"/>
                     </TextBlock>
-                    <StackPanel Orientation="Horizontal"
-                                Margin="0,0,0,8">
-                        <Line X1="0"
-                              X2="28"
-                              Y1="8"
-                              Y2="8"
-                              Stroke="{Binding ChartLineBrush}"
-                              StrokeThickness="4"/>
-                        <TextBlock Text="Usage"
-                                   Foreground="{Binding UnitBrush}"
-                                   FontSize="17"
-                                   Margin="8,0,18,0"/>
-                        <Line X1="0"
-                              X2="28"
-                              Y1="8"
-                              Y2="8"
-                              Stroke="{Binding GpuTemperatureBrush}"
-                              StrokeThickness="3"/>
-                        <TextBlock Text="Temp"
-                                   Foreground="{Binding UnitBrush}"
-                                   FontSize="17"
-                                   Margin="8,0,0,0"/>
-                    </StackPanel>
-                    <Viewbox Stretch="Fill"
-                             Height="170">
-                        <Grid Width="320"
-                              Height="170">
-                            <Line X1="0"
-                                  X2="320"
-                                  Y1="0"
-                                  Y2="0"
-                                  Stroke="{Binding ChartGridBrush}"
-                                  StrokeThickness="1"/>
-                            <Line X1="0"
-                                  X2="320"
-                                  Y1="85"
-                                  Y2="85"
-                                  Stroke="{Binding ChartGridBrush}"
-                                  StrokeThickness="1"/>
-                            <Line X1="0"
-                                  X2="320"
-                                  Y1="170"
-                                  Y2="170"
-                                  Stroke="{Binding ChartGridBrush}"
-                                  StrokeThickness="1"/>
-                            <TextBlock Text="100%"
-                                       Foreground="{Binding UnitBrush}"
-                                       FontSize="12"
-                                       Opacity="0.75"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Top"/>
-                            <TextBlock Text="{Binding GpuTemperatureAxisLabel}"
-                                       Foreground="{Binding UnitBrush}"
-                                       FontSize="12"
-                                       Opacity="0.75"
-                                       HorizontalAlignment="Right"
-                                       VerticalAlignment="Top"/>
-                            <TextBlock Text="0"
-                                       Foreground="{Binding UnitBrush}"
-                                       FontSize="12"
-                                       Opacity="0.75"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Bottom"/>
-                            <Polygon Points="{Binding GpuUsageAreaPoints}"
-                                     Fill="{Binding ChartAreaBrush}"/>
-                            <Polyline Points="{Binding GpuUsageHistoryPoints}"
-                                      Stroke="{Binding ChartLineBrush}"
-                                      StrokeThickness="4"/>
-                            <Polyline Points="{Binding GpuTemperatureHistoryPoints}"
-                                      Stroke="{Binding GpuTemperatureBrush}"
-                                      StrokeThickness="3"
-                                      Opacity="0.75"/>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="18"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0"
+                              Grid.ColumnSpan="{Binding GpuUsageGraphColumnSpan}"
+                              Visibility="{Binding GpuUsageGraphVisibility}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Usage"
+                                       Foreground="{Binding GpuUsageBrush}"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,4"/>
+                            <Viewbox Grid.Row="1" Stretch="Fill">
+                                <Grid Width="320" Height="170">
+                                    <Line X1="0" X2="320" Y1="6" Y2="6" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="85" Y2="85" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="164" Y2="164" Stroke="{Binding ChartGridBrush}"/>
+                                    <TextBlock Text="100%" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75"/>
+                                    <TextBlock Text="0%" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75" VerticalAlignment="Bottom"/>
+                                    <Path Data="{Binding GpuUsageAreaGeometry}" Fill="{Binding GpuUsageAreaBrush}"/>
+                                    <Path Data="{Binding GpuUsageHistoryGeometry}"
+                                          Stroke="{Binding GpuUsageBrush}" StrokeThickness="4"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                                </Grid>
+                            </Viewbox>
                         </Grid>
-                    </Viewbox>
-                </StackPanel>
+
+                        <Grid Grid.Column="{Binding GpuTemperatureGraphColumn}"
+                              Grid.ColumnSpan="{Binding GpuTemperatureGraphColumnSpan}"
+                              Visibility="{Binding GpuTemperatureGraphVisibility}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Température"
+                                       Foreground="{Binding GpuTemperatureBrush}"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,4"/>
+                            <Viewbox Grid.Row="1" Stretch="Fill">
+                                <Grid Width="320" Height="170">
+                                    <Line X1="0" X2="320" Y1="6" Y2="6" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="85" Y2="85" Stroke="{Binding ChartGridBrush}"/>
+                                    <Line X1="0" X2="320" Y1="164" Y2="164" Stroke="{Binding ChartGridBrush}"/>
+                                    <TextBlock Text="{Binding GpuTemperatureAxisLabel}" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75"/>
+                                    <TextBlock Text="0°C" Foreground="{Binding UnitBrush}" FontSize="12" Opacity="0.75" VerticalAlignment="Bottom"/>
+                                    <Path Data="{Binding GpuTemperatureHistoryGeometry}"
+                                          Stroke="{Binding GpuTemperatureBrush}" StrokeThickness="3"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                                </Grid>
+                            </Viewbox>
+                        </Grid>
+                    </Grid>
+                </Grid>
             </Border>
 
         </Grid>

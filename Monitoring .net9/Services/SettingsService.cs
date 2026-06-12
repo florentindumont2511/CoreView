@@ -44,17 +44,24 @@ namespace Monitoring_net9.Services
         public static void Save(
             AppSettings settings)
         {
-            Directory.CreateDirectory(SettingsDirectory);
+            try
+            {
+                Directory.CreateDirectory(SettingsDirectory);
 
-            string json =
-                JsonSerializer.Serialize(
-                    settings,
-                    new JsonSerializerOptions
-                    {
-                        WriteIndented = true
-                    });
+                string json =
+                    JsonSerializer.Serialize(
+                        settings,
+                        new JsonSerializerOptions
+                        {
+                            WriteIndented = true
+                        });
 
-            File.WriteAllText(FilePath, json);
+                File.WriteAllText(FilePath, json);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Settings save error: {ex.Message}");
+            }
         }
 
         private static void MigrateLegacySettings()
@@ -64,8 +71,15 @@ namespace Monitoring_net9.Services
                 return;
             }
 
-            Directory.CreateDirectory(SettingsDirectory);
-            File.Copy(LegacyFilePath, FilePath);
+            try
+            {
+                Directory.CreateDirectory(SettingsDirectory);
+                File.Copy(LegacyFilePath, FilePath);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Settings migration error: {ex.Message}");
+            }
         }
     }
 }

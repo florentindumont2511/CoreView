@@ -5,6 +5,7 @@ namespace Monitoring_net9.Services
     public static class LoggerService
     {
         private const long MaxLogSizeBytes = 1024 * 1024 * 5;
+        private static readonly object SyncRoot = new();
 
         private static readonly string LogDirectory =
             Path.Combine(
@@ -19,12 +20,15 @@ namespace Monitoring_net9.Services
         {
             try
             {
-                Directory.CreateDirectory(LogDirectory);
-                RotateLogIfNeeded();
+                lock (SyncRoot)
+                {
+                    Directory.CreateDirectory(LogDirectory);
+                    RotateLogIfNeeded();
 
-                File.AppendAllText(
-                    LogPath,
-                    $"[{DateTime.Now}] {message}\n");
+                    File.AppendAllText(
+                        LogPath,
+                        $"[{DateTime.Now}] {message}\n");
+                }
             }
             catch
             {

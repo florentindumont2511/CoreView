@@ -5,33 +5,120 @@
 
     <Border Background="{Binding TileBrush, ElementName=Root}"
             CornerRadius="14"
-            Padding="8">
+            Padding="6">
 
         <Grid VerticalAlignment="Center">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <TextBlock Text="{Binding Title, ElementName=Root}"
                        Foreground="{Binding TitleBrush, ElementName=Root}"
-                       FontSize="42"/>
+                       FontSize="30"
+                       TextTrimming="CharacterEllipsis"/>
 
-            <StackPanel Grid.Row="1"
-                        Orientation="Horizontal">
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="112"/>
+                </Grid.ColumnDefinitions>
 
-                <TextBlock Text="{Binding Value, ElementName=Root}"
-                           Foreground="{Binding ValueBrush, ElementName=Root}"
-                           FontSize="74"
-                           FontWeight="Bold"/>
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal">
+                    <TextBlock Text="{Binding Value, ElementName=Root}"
+                               Foreground="{Binding ValueBrush, ElementName=Root}"
+                               FontSize="52"
+                               FontWeight="Bold"/>
 
-                <TextBlock Text="{Binding Unit, ElementName=Root}"
-                           Foreground="{Binding UnitBrush, ElementName=Root}"
-                           FontSize="46"
-                           Margin="16,0,0,6"
-                           VerticalAlignment="Bottom"/>
+                    <TextBlock Text="{Binding Unit, ElementName=Root}"
+                               Foreground="{Binding UnitBrush, ElementName=Root}"
+                               FontSize="32"
+                               Margin="10,0,0,4"
+                               VerticalAlignment="Bottom"/>
+                </StackPanel>
 
-            </StackPanel>
+                <Grid Grid.Column="1"
+                      VerticalAlignment="Center"
+                      Margin="8,0,2,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="MAX"
+                                   Foreground="{Binding UnitBrush, ElementName=Root}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Opacity="0.75"
+                                   VerticalAlignment="Center"/>
+                        <Viewbox Grid.Column="1"
+                                 Stretch="Uniform"
+                                 StretchDirection="DownOnly"
+                                 HorizontalAlignment="Left"
+                                 MaxHeight="29">
+                            <TextBlock Text="{Binding MaximumStatistic, ElementName=Root}"
+                                       Foreground="{Binding UnitBrush, ElementName=Root}"
+                                       FontSize="27"
+                                       FontWeight="Bold"/>
+                        </Viewbox>
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="MIN"
+                                   Foreground="{Binding UnitBrush, ElementName=Root}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Opacity="0.75"
+                                   VerticalAlignment="Center"/>
+                        <Viewbox Grid.Column="1"
+                                 Stretch="Uniform"
+                                 StretchDirection="DownOnly"
+                                 HorizontalAlignment="Left"
+                                 MaxHeight="29">
+                            <TextBlock Text="{Binding MinimumStatistic, ElementName=Root}"
+                                       Foreground="{Binding UnitBrush, ElementName=Root}"
+                                       FontSize="27"
+                                       FontWeight="Bold"/>
+                        </Viewbox>
+                    </Grid>
+                </Grid>
+            </Grid>
+
+            <Grid Grid.Row="2"
+                  Margin="0,3,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="MOY"
+                               Foreground="{Binding UnitBrush, ElementName=Root}"
+                               FontSize="13"
+                               FontWeight="Bold"
+                               Opacity="0.75"/>
+                    <Viewbox Stretch="Uniform"
+                             StretchDirection="DownOnly"
+                             HorizontalAlignment="Left"
+                             MaxHeight="34">
+                        <TextBlock Text="{Binding AverageStatistic, ElementName=Root}"
+                                   Foreground="{Binding UnitBrush, ElementName=Root}"
+                                   FontSize="32"
+                                   FontWeight="Bold"/>
+                    </Viewbox>
+                </StackPanel>
+
+            </Grid>
 
         </Grid>
 

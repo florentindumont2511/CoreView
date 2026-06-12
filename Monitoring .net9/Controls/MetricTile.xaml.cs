@@ -28,6 +28,36 @@ namespace Monitoring_net9.Controls
                 typeof(MetricTile),
                 new PropertyMetadata(string.Empty));
 
+        public static readonly DependencyProperty StatisticsProperty =
+            DependencyProperty.Register(
+                nameof(Statistics),
+                typeof(string),
+                typeof(MetricTile),
+                new PropertyMetadata(
+                    "Min --  Moy --  Max --",
+                    OnStatisticsChanged));
+
+        public static readonly DependencyProperty MinimumStatisticProperty =
+            DependencyProperty.Register(
+                nameof(MinimumStatistic),
+                typeof(string),
+                typeof(MetricTile),
+                new PropertyMetadata("--"));
+
+        public static readonly DependencyProperty AverageStatisticProperty =
+            DependencyProperty.Register(
+                nameof(AverageStatistic),
+                typeof(string),
+                typeof(MetricTile),
+                new PropertyMetadata("--"));
+
+        public static readonly DependencyProperty MaximumStatisticProperty =
+            DependencyProperty.Register(
+                nameof(MaximumStatistic),
+                typeof(string),
+                typeof(MetricTile),
+                new PropertyMetadata("--"));
+
         public static readonly DependencyProperty ValueBrushProperty =
             DependencyProperty.Register(
                 nameof(ValueBrush),
@@ -85,6 +115,30 @@ namespace Monitoring_net9.Controls
             set => SetValue(UnitProperty, value);
         }
 
+        public string Statistics
+        {
+            get => (string)GetValue(StatisticsProperty);
+            set => SetValue(StatisticsProperty, value);
+        }
+
+        public string MinimumStatistic
+        {
+            get => (string)GetValue(MinimumStatisticProperty);
+            private set => SetValue(MinimumStatisticProperty, value);
+        }
+
+        public string AverageStatistic
+        {
+            get => (string)GetValue(AverageStatisticProperty);
+            private set => SetValue(AverageStatisticProperty, value);
+        }
+
+        public string MaximumStatistic
+        {
+            get => (string)GetValue(MaximumStatisticProperty);
+            private set => SetValue(MaximumStatisticProperty, value);
+        }
+
         public MediaBrush ValueBrush
         {
             get => (MediaBrush)GetValue(ValueBrushProperty);
@@ -107,6 +161,40 @@ namespace Monitoring_net9.Controls
         {
             get => (MediaBrush)GetValue(UnitBrushProperty);
             set => SetValue(UnitBrushProperty, value);
+        }
+
+        private static void OnStatisticsChanged(
+            DependencyObject dependencyObject,
+            DependencyPropertyChangedEventArgs e)
+        {
+            if (dependencyObject is not MetricTile tile)
+            {
+                return;
+            }
+
+            string[] parts =
+                (e.NewValue?.ToString() ?? string.Empty)
+                    .Split("  ", StringSplitOptions.RemoveEmptyEntries);
+
+            tile.MinimumStatistic = ReadStatistic(parts, 0);
+            tile.AverageStatistic = ReadStatistic(parts, 1);
+            tile.MaximumStatistic = ReadStatistic(parts, 2);
+        }
+
+        private static string ReadStatistic(
+            string[] parts,
+            int index)
+        {
+            if (index >= parts.Length)
+            {
+                return "--";
+            }
+
+            int separatorIndex = parts[index].IndexOf(' ');
+
+            return separatorIndex >= 0
+                ? parts[index][(separatorIndex + 1)..].Trim()
+                : "--";
         }
     }
 }
