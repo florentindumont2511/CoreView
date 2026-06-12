@@ -89,10 +89,11 @@ ou un écran secondaire dédié
 Le choix de l’écran est sauvegardé automatiquement.
 
 Capture d'écran :
-<img width="1900" height="1062" alt="image" src="https://github.com/user-attachments/assets/2ea39c32-0482-4333-a695-76711ca196c7" />
+<img width="1891" height="1058" alt="image" src="https://github.com/user-attachments/assets/b85e8d03-d383-44b7-9b86-529f3d01108d" />
 
 
 
 Auteur
+
 
 Projet développé par VégaNova_D.
