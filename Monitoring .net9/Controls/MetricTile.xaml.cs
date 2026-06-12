@@ -37,6 +37,13 @@ namespace Monitoring_net9.Controls
                     "Min --  Moy --  Max --",
                     OnStatisticsChanged));
 
+        public static readonly DependencyProperty ShowStatisticsProperty =
+            DependencyProperty.Register(
+                nameof(ShowStatistics),
+                typeof(bool),
+                typeof(MetricTile),
+                new PropertyMetadata(true));
+
         public static readonly DependencyProperty MinimumStatisticProperty =
             DependencyProperty.Register(
                 nameof(MinimumStatistic),
@@ -119,6 +126,12 @@ namespace Monitoring_net9.Controls
         {
             get => (string)GetValue(StatisticsProperty);
             set => SetValue(StatisticsProperty, value);
+        }
+
+        public bool ShowStatistics
+        {
+            get => (bool)GetValue(ShowStatisticsProperty);
+            set => SetValue(ShowStatisticsProperty, value);
         }
 
         public string MinimumStatistic

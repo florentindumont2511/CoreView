@@ -188,6 +188,7 @@
                                  Title="RAM Clock"
                                  Value="{Binding RamClock}"
                                  Unit="MHz"
+                                 ShowStatistics="False"
                                  Statistics="{Binding SensorStatistics[RamClock]}"
                                  Visibility="{Binding SensorVisibilities[RamClock]}"
                                  TileBrush="{Binding TileBrush}"
