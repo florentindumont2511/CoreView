@@ -232,8 +232,8 @@ namespace Monitoring_net9.Services
 
         private void UpdateMemorySensor(HwInfoReadingElement reading)
         {
-            if (ContainsLabel(reading, "Memory Clock") ||
-                ContainsLabel(reading, "DRAM Frequency"))
+            if (MatchesLabel(reading, "Memory Clock") ||
+                MatchesLabel(reading, "DRAM Frequency"))
             {
                 Data.RamClock = reading.Value;
             }
@@ -256,6 +256,16 @@ namespace Monitoring_net9.Services
             return reading.LabelOrig?.Contains(
                 label,
                 StringComparison.OrdinalIgnoreCase) == true;
+        }
+
+        private static bool MatchesLabel(
+            HwInfoReadingElement reading,
+            string label)
+        {
+            return string.Equals(
+                reading.LabelOrig?.Trim(),
+                label,
+                StringComparison.OrdinalIgnoreCase);
         }
 
         private void LogConnectError(Exception ex)
