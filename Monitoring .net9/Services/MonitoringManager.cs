@@ -16,6 +16,41 @@ namespace Monitoring_net9.Services
         public bool IsHwInfoConnected =>
             hwInfoService.IsConnected;
 
+        public bool IsHwInfoRestartDue(TimeSpan maximumUptime)
+        {
+            try
+            {
+                DateTime now = DateTime.Now;
+                Process[] processes =
+                    Process.GetProcessesByName(HwInfoProcessName);
+
+                try
+                {
+                    foreach (Process process in processes)
+                    {
+                        if (now - process.StartTime >= maximumUptime)
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+                finally
+                {
+                    foreach (Process process in processes)
+                    {
+                        process.Dispose();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"HWiNFO uptime check error: {ex.Message}");
+                return false;
+            }
+        }
+
         public MonitoringManager()
         {
             hardwareMonitorService = new HardwareMonitorService();
@@ -88,6 +123,7 @@ namespace Monitoring_net9.Services
                 try
                 {
                     process.Kill();
+                    await process.WaitForExitAsync();
                     process.Dispose();
                 }
                 catch (Exception ex)
@@ -96,10 +132,40 @@ namespace Monitoring_net9.Services
                 }
             }
 
+            if (Process.GetProcessesByName(HwInfoProcessName).Length > 0)
+            {
+                await RunElevatedTaskKillAsync();
+            }
+
             await Task.Delay(TimeSpan.FromSeconds(2));
             StartHwInfo();
             await Task.Delay(TimeSpan.FromSeconds(5));
             ConnectHwInfo();
+        }
+
+        private static async Task RunElevatedTaskKillAsync()
+        {
+            try
+            {
+                using Process? taskKill = Process.Start(
+                    new ProcessStartInfo
+                    {
+                        FileName = "taskkill.exe",
+                        Arguments = $"/F /IM {HwInfoProcessName}.exe",
+                        UseShellExecute = true,
+                        Verb = "runas",
+                        WindowStyle = ProcessWindowStyle.Hidden
+                    });
+
+                if (taskKill != null)
+                {
+                    await taskKill.WaitForExitAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Elevated HWiNFO stop error: {ex.Message}");
+            }
         }
 
         public void Update()
@@ -222,7 +288,7 @@ namespace Monitoring_net9.Services
         {
             double hwInfoValue = GetMetricValue(hwInfoService.Data, metricId);
 
-            if (hwInfoService.IsConnected &&
+            if (hwInfoService.HasFreshData &&
                 hwInfoService.Data.SourceDetails.ContainsKey(metricId) &&
                 IsPlausible(hwInfoValue, minimum, maximum, allowZero))
             {

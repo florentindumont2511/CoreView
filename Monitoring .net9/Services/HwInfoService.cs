@@ -10,6 +10,7 @@ namespace Monitoring_net9.Services
 
         private MemoryMappedFile? memoryFile;
         private DateTime lastConnectErrorLog = DateTime.MinValue;
+        private DateTime lastSuccessfulReadUtc = DateTime.MinValue;
 
         public HwInfoSharedMemHeader Header { get; private set; }
 
@@ -20,6 +21,10 @@ namespace Monitoring_net9.Services
         public Dictionary<uint, HwInfoSensorElement> Sensors { get; } = [];
 
         public bool IsConnected { get; private set; }
+
+        public bool HasFreshData =>
+            IsConnected &&
+            DateTime.UtcNow - lastSuccessfulReadUtc < TimeSpan.FromSeconds(5);
 
         public bool Connect()
         {
@@ -62,6 +67,7 @@ namespace Monitoring_net9.Services
             {
                 memoryFile = null;
                 IsConnected = false;
+                lastSuccessfulReadUtc = DateTime.MinValue;
             }
         }
 
@@ -122,6 +128,8 @@ namespace Monitoring_net9.Services
                             offset,
                             elementSize));
                 }
+
+                lastSuccessfulReadUtc = DateTime.UtcNow;
 
                 return true;
             }

@@ -13,18 +13,17 @@ namespace Monitoring_net9
     public partial class MainWindow : Window
     {
         private readonly MonitoringManager monitoringManager;
+        private readonly DispatcherTimer sensorTimer;
         private readonly DispatcherTimer renderTimer;
         private readonly DispatcherTimer hwInfoRestartTimer;
         private readonly TaskbarIcon trayIcon;
         private readonly MainWindowViewModel viewModel = new();
-        private readonly CancellationTokenSource monitoringCancellation = new();
-        private readonly SemaphoreSlim monitoringGate = new(1, 1);
-        private readonly object latestDataSync = new();
 
         private SettingsWindow? settingsWindow;
         private AppSettings settings;
         private bool isRestartingHwInfo;
-        private Task? monitoringTask;
+        private int hwInfoConnectionFailureCount;
+        private DateTime lastHwInfoRecoveryAttempt = DateTime.MinValue;
         private SensorData? latestSensorData;
         private bool latestHwInfoStatus;
         private long latestSensorVersion;
@@ -50,6 +49,13 @@ namespace Monitoring_net9
             monitoringManager = new MonitoringManager();
             monitoringManager.Initialize();
 
+            sensorTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            sensorTimer.Tick += SensorTimer_Tick;
+            sensorTimer.Start();
+
             renderTimer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromMilliseconds(250)
@@ -57,12 +63,9 @@ namespace Monitoring_net9
             renderTimer.Tick += RenderTimer_Tick;
             renderTimer.Start();
 
-            monitoringTask =
-                Task.Run(() => MonitoringLoopAsync(monitoringCancellation.Token));
-
             hwInfoRestartTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromHours(11)
+                Interval = TimeSpan.FromMinutes(1)
             };
             hwInfoRestartTimer.Tick += HwInfoRestartTimer_Tick;
             hwInfoRestartTimer.Start();
@@ -218,34 +221,12 @@ namespace Monitoring_net9
             object? sender,
             EventArgs e)
         {
-            if (isRestartingHwInfo)
+            if (!monitoringManager.IsHwInfoRestartDue(TimeSpan.FromHours(11)))
             {
                 return;
             }
 
-            isRestartingHwInfo = true;
-
-            try
-            {
-                await monitoringGate.WaitAsync();
-
-                try
-                {
-                    await monitoringManager.RestartHwInfoAsync();
-                }
-                finally
-                {
-                    monitoringGate.Release();
-                }
-            }
-            catch (Exception ex)
-            {
-                LoggerService.Log($"HWiNFO restart error: {ex.Message}");
-            }
-            finally
-            {
-                isRestartingHwInfo = false;
-            }
+            await RestartHwInfoSafelyAsync();
         }
 
         protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
@@ -268,13 +249,10 @@ namespace Monitoring_net9
             try
             {
                 renderTimer.Stop();
+                sensorTimer.Stop();
                 hwInfoRestartTimer.Stop();
-                monitoringCancellation.Cancel();
-                monitoringTask?.Wait(TimeSpan.FromSeconds(3));
                 trayIcon.Dispose();
                 monitoringManager.Dispose();
-                monitoringGate.Dispose();
-                monitoringCancellation.Dispose();
             }
             catch (Exception ex)
             {
@@ -284,49 +262,61 @@ namespace Monitoring_net9
             base.OnClosed(e);
         }
 
-        private async Task MonitoringLoopAsync(CancellationToken cancellationToken)
+        private async void SensorTimer_Tick(object? sender, EventArgs e)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            try
             {
-                try
+                monitoringManager.Update();
+                latestSensorData = monitoringManager.Data.Copy();
+                latestHwInfoStatus = monitoringManager.IsHwInfoConnected;
+                latestSensorVersion++;
+
+                if (latestHwInfoStatus)
                 {
-                    await monitoringGate.WaitAsync(cancellationToken);
+                    hwInfoConnectionFailureCount = 0;
+                }
+                else
+                {
+                    hwInfoConnectionFailureCount++;
 
-                    try
+                    if (hwInfoConnectionFailureCount >= 3 &&
+                        DateTime.Now - lastHwInfoRecoveryAttempt > TimeSpan.FromMinutes(1))
                     {
-                        monitoringManager.Update();
-                        SensorData snapshot = monitoringManager.Data.Copy();
-                        bool isHwInfoConnected = monitoringManager.IsHwInfoConnected;
-
-                        lock (latestDataSync)
-                        {
-                            latestSensorData = snapshot;
-                            latestHwInfoStatus = isHwInfoConnected;
-                            latestSensorVersion++;
-                        }
-                    }
-                    finally
-                    {
-                        monitoringGate.Release();
+                        await RestartHwInfoSafelyAsync();
                     }
                 }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    LoggerService.Log($"Sensor collection error: {ex.Message}");
-                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"Sensor collection error: {ex.Message}");
+            }
+        }
 
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
+        private async Task RestartHwInfoSafelyAsync()
+        {
+            if (isRestartingHwInfo)
+            {
+                return;
+            }
+
+            isRestartingHwInfo = true;
+            lastHwInfoRecoveryAttempt = DateTime.Now;
+            sensorTimer.Stop();
+
+            try
+            {
+                LoggerService.Log("HWiNFO automatic recovery started");
+                await monitoringManager.RestartHwInfoAsync();
+                hwInfoConnectionFailureCount = 0;
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"HWiNFO restart error: {ex.Message}");
+            }
+            finally
+            {
+                sensorTimer.Start();
+                isRestartingHwInfo = false;
             }
         }
 
@@ -340,18 +330,15 @@ namespace Monitoring_net9
                 bool isHwInfoConnected;
                 long version;
 
-                lock (latestDataSync)
+                version = latestSensorVersion;
+
+                if (version == renderedSensorVersion)
                 {
-                    version = latestSensorVersion;
-
-                    if (version == renderedSensorVersion)
-                    {
-                        return;
-                    }
-
-                    snapshot = latestSensorData;
-                    isHwInfoConnected = latestHwInfoStatus;
+                    return;
                 }
+
+                snapshot = latestSensorData;
+                isHwInfoConnected = latestHwInfoStatus;
 
                 if (snapshot == null)
                 {
