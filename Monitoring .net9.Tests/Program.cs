@@ -20,7 +20,10 @@ var tests = new List<(string Name, Action Test)>
     ("applies usage and temperature colors", AppliesUsageAndTemperatureColors),
     ("tracks minimum average and maximum values", TracksMinimumAverageAndMaximumValues),
     ("resets statistics and graph history", ResetsStatisticsAndGraphHistory),
-    ("exposes sensor source details", ExposesSensorSourceDetails)
+    ("exposes sensor source details", ExposesSensorSourceDetails),
+    ("applies seven inch ram and statistic options", AppliesSevenInchRamAndStatisticOptions),
+    ("suspends and restores hidden graph rendering", SuspendsAndRestoresHiddenGraphRendering),
+    ("reuses dictionaries and suppresses unchanged notifications", ReusesDictionariesAndSuppressesUnchangedNotifications)
 };
 
 foreach ((string name, Action test) in tests)
@@ -380,6 +383,79 @@ static void ExposesSensorSourceDetails()
         "Calculé • puissance CPU + puissance GPU",
         viewModel.SensorSources["TotalPower"]);
     AssertEqual("Source indisponible", viewModel.SensorSources["GpuClock"]);
+}
+
+static void AppliesSevenInchRamAndStatisticOptions()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.ApplySettings(
+        new AppSettings
+        {
+            SevenInchMode = true,
+            RamFrequencyMode = "Effective",
+            ShowMinimumStatistic = false,
+            ShowAverageStatistic = true,
+            ShowMaximumStatistic = false
+        });
+    viewModel.UpdateSensors(new SensorData { RamClock = 3000 });
+
+    AssertEqual(new Thickness(10), viewModel.DashboardMargin);
+    AssertEqual(new GridLength(16), viewModel.DashboardColumnGap);
+    AssertEqual("6000", viewModel.RamClock);
+    AssertEqual("MT/s", viewModel.RamClockUnit);
+    AssertEqual(false, viewModel.ShowMinimumStatistic);
+    AssertEqual(true, viewModel.ShowAverageStatistic);
+    AssertEqual(false, viewModel.ShowMaximumStatistic);
+}
+
+static void SuspendsAndRestoresHiddenGraphRendering()
+{
+    var viewModel = new MainWindowViewModel();
+
+    viewModel.ApplySettings(
+        new AppSettings
+        {
+            ShowMiniGraphs = false
+        });
+
+    viewModel.UpdateSensors(new SensorData { CpuUsage = 20, GpuTemperature = 50 });
+    viewModel.UpdateSensors(new SensorData { CpuUsage = 40, GpuTemperature = 60 });
+
+    AssertEqual(0, viewModel.CpuUsageHistoryPoints.Count);
+    AssertEqual(0, viewModel.GpuTemperatureHistoryPoints.Count);
+
+    viewModel.ApplySettings(new AppSettings { ShowMiniGraphs = true });
+
+    AssertEqual(2, viewModel.CpuUsageHistoryPoints.Count);
+    AssertEqual(2, viewModel.GpuTemperatureHistoryPoints.Count);
+}
+
+static void ReusesDictionariesAndSuppressesUnchangedNotifications()
+{
+    var viewModel = new MainWindowViewModel();
+    IReadOnlyDictionary<string, string> statistics = viewModel.SensorStatistics;
+    IReadOnlyDictionary<string, string> sources = viewModel.SensorSources;
+    int cpuUsageNotifications = 0;
+
+    viewModel.PropertyChanged += (_, args) =>
+    {
+        if (args.PropertyName == nameof(MainWindowViewModel.CpuUsage))
+        {
+            cpuUsageNotifications++;
+        }
+    };
+
+    var data = new SensorData { CpuUsage = 25 };
+    data.SetSource("CpuUsage", "LibreHardwareMonitor • CPU Total");
+    viewModel.UpdateSensors(data);
+    Brush firstBrush = viewModel.CpuUsageBrush;
+    viewModel.UpdateSensors(data);
+
+    AssertTrue(ReferenceEquals(statistics, viewModel.SensorStatistics));
+    AssertTrue(ReferenceEquals(sources, viewModel.SensorSources));
+    AssertTrue(ReferenceEquals(firstBrush, viewModel.CpuUsageBrush));
+    AssertEqual(1, cpuUsageNotifications);
 }
 
 static void AssertEqual<T>(

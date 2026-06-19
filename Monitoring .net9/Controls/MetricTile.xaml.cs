@@ -51,6 +51,27 @@ namespace Monitoring_net9.Controls
                 typeof(MetricTile),
                 new PropertyMetadata("Source indisponible"));
 
+        public static readonly DependencyProperty ShowMinimumStatisticProperty =
+            DependencyProperty.Register(
+                nameof(ShowMinimumStatistic),
+                typeof(bool),
+                typeof(MetricTile),
+                new PropertyMetadata(true));
+
+        public static readonly DependencyProperty ShowAverageStatisticProperty =
+            DependencyProperty.Register(
+                nameof(ShowAverageStatistic),
+                typeof(bool),
+                typeof(MetricTile),
+                new PropertyMetadata(true));
+
+        public static readonly DependencyProperty ShowMaximumStatisticProperty =
+            DependencyProperty.Register(
+                nameof(ShowMaximumStatistic),
+                typeof(bool),
+                typeof(MetricTile),
+                new PropertyMetadata(true));
+
         public static readonly DependencyProperty MinimumStatisticProperty =
             DependencyProperty.Register(
                 nameof(MinimumStatistic),
@@ -145,6 +166,24 @@ namespace Monitoring_net9.Controls
         {
             get => (string)GetValue(SourceInfoProperty);
             set => SetValue(SourceInfoProperty, value);
+        }
+
+        public bool ShowMinimumStatistic
+        {
+            get => (bool)GetValue(ShowMinimumStatisticProperty);
+            set => SetValue(ShowMinimumStatisticProperty, value);
+        }
+
+        public bool ShowAverageStatistic
+        {
+            get => (bool)GetValue(ShowAverageStatisticProperty);
+            set => SetValue(ShowAverageStatisticProperty, value);
+        }
+
+        public bool ShowMaximumStatistic
+        {
+            get => (bool)GetValue(ShowMaximumStatisticProperty);
+            set => SetValue(ShowMaximumStatisticProperty, value);
         }
 
         public string MinimumStatistic

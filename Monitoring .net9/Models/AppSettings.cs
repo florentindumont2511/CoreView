@@ -25,9 +25,13 @@ namespace Monitoring_net9.Models
 
         public string DashboardScalePreset { get; set; } = "Custom";
 
+        public bool SevenInchMode { get; set; }
+
         public string Theme { get; set; } = "Dark";
 
         public string DateTimeLanguage { get; set; } = "French";
+
+        public string RamFrequencyMode { get; set; } = "Clock";
 
         public bool ShowAdvancedSensors { get; set; } = true;
 
@@ -46,6 +50,12 @@ namespace Monitoring_net9.Models
         public bool ShowGpuTemperatureGraph { get; set; } = true;
 
         public List<string> HiddenSensors { get; set; } = [];
+
+        public bool ShowMinimumStatistic { get; set; } = true;
+
+        public bool ShowAverageStatistic { get; set; } = true;
+
+        public bool ShowMaximumStatistic { get; set; } = true;
 
         public int HistoryDurationSeconds { get; set; } = 60;
     }

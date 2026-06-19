@@ -84,6 +84,12 @@
                 </ComboBox>
             </StackPanel>
 
+            <CheckBox x:Name="SevenInchModeCheckBox"
+                      Content="Mode écran 7 pouces"
+                      Foreground="White"
+                      FontSize="22"
+                      Margin="0,0,0,24"/>
+
             <StackPanel Orientation="Horizontal"
                         Margin="0,0,0,24">
                 <ComboBox x:Name="ThemeComboBox"
@@ -214,6 +220,22 @@
                            VerticalAlignment="Center"/>
             </StackPanel>
 
+            <TextBlock Text="Fréquence RAM"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,10"/>
+
+            <ComboBox x:Name="RamFrequencyModeComboBox"
+                      Width="330"
+                      Height="48"
+                      FontSize="20"
+                      HorizontalAlignment="Left"
+                      Margin="0,0,0,24">
+                <ComboBoxItem Content="Fréquence réelle (MHz)" Tag="Clock"/>
+                <ComboBoxItem Content="Débit effectif (MT/s)" Tag="Effective"/>
+            </ComboBox>
+
             <CheckBox x:Name="ShowAdvancedSensorsCheckBox"
                       Content="Afficher les capteurs avanc&#233;s"
                       Foreground="White"
@@ -234,6 +256,30 @@
 
             <WrapPanel x:Name="SensorOptionsPanel"
                        Margin="0,0,0,18"/>
+
+            <TextBlock Text="Statistiques affichées"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,10"/>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,18">
+                <CheckBox x:Name="ShowMinimumStatisticCheckBox"
+                          Content="Minimum"
+                          Foreground="White"
+                          FontSize="22"
+                          Margin="0,0,36,0"/>
+                <CheckBox x:Name="ShowAverageStatisticCheckBox"
+                          Content="Moyenne"
+                          Foreground="White"
+                          FontSize="22"
+                          Margin="0,0,36,0"/>
+                <CheckBox x:Name="ShowMaximumStatisticCheckBox"
+                          Content="Maximum"
+                          Foreground="White"
+                          FontSize="22"/>
+            </StackPanel>
 
             <TextBlock Text="Graphes affichés"
                        FontSize="24"

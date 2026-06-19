@@ -8,7 +8,18 @@
         WindowState="Normal"
         Background="{Binding DashboardBrush}">
 
-    <Grid Margin="24">
+    <Window.Resources>
+        <Style TargetType="{x:Type controls:MetricTile}">
+            <Setter Property="ShowMinimumStatistic"
+                    Value="{Binding ShowMinimumStatistic}"/>
+            <Setter Property="ShowAverageStatistic"
+                    Value="{Binding ShowAverageStatistic}"/>
+            <Setter Property="ShowMaximumStatistic"
+                    Value="{Binding ShowMaximumStatistic}"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="{Binding DashboardMargin}">
         <Grid.LayoutTransform>
             <ScaleTransform ScaleX="{Binding DashboardScale}"
                             ScaleY="{Binding DashboardScale}"/>
@@ -16,7 +27,7 @@
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1.4*" />
-            <ColumnDefinition Width="30" />
+            <ColumnDefinition Width="{Binding DashboardColumnGap}" />
             <ColumnDefinition Width="1.4*" />
         </Grid.ColumnDefinitions>
 
@@ -74,19 +85,38 @@
                        Foreground="{Binding SecondaryTextBrush}"
                        TextTrimming="CharacterEllipsis"/>
 
-            <TextBlock Grid.Row="3"
-                       Grid.Column="2"
-                       Text="{Binding HwInfoStatus}"
-                       Foreground="{Binding HwInfoStatusBrush}"
-                       FontSize="26"
-                       FontWeight="SemiBold"
-                       HorizontalAlignment="Right"
-                       VerticalAlignment="Center"
-                       TextTrimming="CharacterEllipsis"/>
+            <StackPanel Grid.Row="3"
+                        Grid.Column="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding HwInfoStatus}"
+                           Foreground="{Binding HwInfoStatusBrush}"
+                           FontSize="26"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+                <Button Content="↻"
+                        Width="44"
+                        Height="44"
+                        FontSize="30"
+                        FontWeight="Bold"
+                        Foreground="{Binding HeaderBrush}"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        Margin="10,0,0,0"
+                        ToolTip="Remettre à zéro Min, Moy, Max et les graphes"
+                        Click="ResetMonitoringDataButton_Click"/>
+            </StackPanel>
+
+            <UniformGrid Grid.Row="5"
+                         Grid.RowSpan="5"
+                         Grid.ColumnSpan="3"
+                         Columns="3">
 
             <controls:MetricTile Grid.Row="5"
                                  Grid.Column="0"
-                                 Margin="0,0,5,0"
+                                 Margin="4"
                                  Title="CPU Usage"
                                  Value="{Binding CpuUsage}"
                                  Unit="%"
@@ -100,7 +130,7 @@
 
             <controls:MetricTile Grid.Row="5"
                                  Grid.Column="1"
-                                 Margin="5,0,5,0"
+                                 Margin="4"
                                  Title="CPU Temp"
                                  Value="{Binding CpuTemperature}"
                                  Unit="&#176;C"
@@ -114,7 +144,7 @@
 
             <controls:MetricTile Grid.Row="5"
                                  Grid.Column="2"
-                                 Margin="5,0,0,0"
+                                 Margin="4"
                                  Title="RAM"
                                  Value="{Binding RamUsage}"
                                  Unit="GB"
@@ -127,7 +157,7 @@
 
             <controls:MetricTile Grid.Row="7"
                                  Grid.Column="0"
-                                 Margin="0,0,5,0"
+                                 Margin="4"
                                  Title="CPU Clock"
                                  Value="{Binding CpuClock}"
                                  Unit="GHz"
@@ -140,7 +170,7 @@
 
             <controls:MetricTile Grid.Row="7"
                                  Grid.Column="1"
-                                 Margin="5,0,5,0"
+                                 Margin="4"
                                  Title="CPU Power"
                                  Value="{Binding CpuPower}"
                                  Unit="W"
@@ -153,7 +183,7 @@
 
             <controls:MetricTile Grid.Row="7"
                                  Grid.Column="2"
-                                 Margin="5,0,0,0"
+                                 Margin="4"
                                  Title="CPU Tension"
                                  Value="{Binding CpuTension}"
                                  Unit="V"
@@ -166,7 +196,7 @@
 
             <controls:MetricTile Grid.Row="9"
                                  Grid.Column="0"
-                                 Margin="0,0,5,0"
+                                 Margin="4"
                                  Title="RAM Usage"
                                  Value="{Binding RamUsagePercent}"
                                  Unit="%"
@@ -179,7 +209,7 @@
 
             <controls:MetricTile Grid.Row="9"
                                  Grid.Column="1"
-                                 Margin="5,0,5,0"
+                                 Margin="4"
                                  Title="RAM Total"
                                  Value="{Binding RamTotal}"
                                  Unit="GB"
@@ -192,10 +222,10 @@
 
             <controls:MetricTile Grid.Row="9"
                                  Grid.Column="2"
-                                 Margin="5,0,0,0"
+                                 Margin="4"
                                  Title="RAM Clock"
                                  Value="{Binding RamClock}"
-                                 Unit="MHz"
+                                 Unit="{Binding RamClockUnit}"
                                  ShowStatistics="False"
                                  Statistics="{Binding SensorStatistics[RamClock]}"
                                  SourceInfo="{Binding SensorSources[RamClock]}"
@@ -203,6 +233,8 @@
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
+
+            </UniformGrid>
 
             <Border Grid.Row="11"
                     Grid.ColumnSpan="3"
@@ -335,9 +367,14 @@
                        TextTrimming="CharacterEllipsis"
                        Margin="0,18,190,10"/>
 
+            <UniformGrid Grid.Row="2"
+                         Grid.RowSpan="7"
+                         Grid.ColumnSpan="3"
+                         Columns="3">
+
             <controls:MetricTile Grid.Row="2"
                                  Grid.Column="0"
-                                 Margin="0,0,5,0"
+                                 Margin="4"
                                  Title="GPU Usage"
                                  Value="{Binding GpuUsage}"
                                  Unit="%"
@@ -351,7 +388,7 @@
 
             <controls:MetricTile Grid.Row="2"
                                  Grid.Column="1"
-                                 Margin="5,0,5,0"
+                                 Margin="4"
                                  Title="GPU Temp"
                                  Value="{Binding GpuTemperature}"
                                  Unit="&#176;C"
@@ -365,7 +402,7 @@
 
             <controls:MetricTile Grid.Row="2"
                                  Grid.Column="2"
-                                 Margin="5,0,0,0"
+                                 Margin="4"
                                  Title="VRAM"
                                  Value="{Binding GpuMemory}"
                                  Unit="GB"
@@ -378,7 +415,7 @@
 
             <controls:MetricTile Grid.Row="4"
                                  Grid.Column="0"
-                                 Margin="0,0,5,0"
+                                 Margin="4"
                                  Title="GPU Clock"
                                  Value="{Binding GpuClock}"
                                  Unit="MHz"
@@ -391,7 +428,7 @@
 
             <controls:MetricTile Grid.Row="4"
                                  Grid.Column="1"
-                                 Margin="5,0,5,0"
+                                 Margin="4"
                                  Title="GPU Power"
                                  Value="{Binding GpuPower}"
                                  Unit="W"
@@ -404,7 +441,7 @@
 
             <controls:MetricTile Grid.Row="4"
                                  Grid.Column="2"
-                                 Margin="5,0,0,0"
+                                 Margin="4"
                                  Title="GPU Tension"
                                  Value="{Binding GpuTension}"
                                  Unit="{Binding GpuTensionUnit}"
@@ -417,7 +454,7 @@
 
             <controls:MetricTile Grid.Row="6"
                                  Grid.Column="0"
-                                 Margin="0,0,5,0"
+                                 Margin="4"
                                  Title="GPU Hotspot"
                                  Value="{Binding GpuHotspot}"
                                  Unit="&#176;C"
@@ -430,7 +467,7 @@
 
             <controls:MetricTile Grid.Row="6"
                                  Grid.Column="1"
-                                 Margin="5,0,5,0"
+                                 Margin="4"
                                  Title="Total Power"
                                  Value="{Binding TotalPower}"
                                  Unit="W"
@@ -443,7 +480,7 @@
 
             <controls:MetricTile Grid.Row="6"
                                  Grid.Column="2"
-                                 Margin="5,0,0,0"
+                                 Margin="4"
                                  Title="Memory Junction"
                                  Value="{Binding GpuMemoryJunction}"
                                  Unit="&#176;C"
@@ -456,7 +493,7 @@
 
             <controls:MetricTile Grid.Row="8"
                                  Grid.Column="0"
-                                 Margin="0,0,5,0"
+                                 Margin="4"
                                  Title="VRAM Usage"
                                  Value="{Binding GpuMemoryUsagePercent}"
                                  Unit="%"
@@ -469,7 +506,7 @@
 
             <controls:MetricTile Grid.Row="8"
                                  Grid.Column="1"
-                                 Margin="5,0,5,0"
+                                 Margin="4"
                                  Title="VRAM Total"
                                  Value="{Binding GpuMemoryTotal}"
                                  Unit="GB"
@@ -482,7 +519,7 @@
 
             <controls:MetricTile Grid.Row="8"
                                  Grid.Column="2"
-                                 Margin="5,0,0,0"
+                                 Margin="4"
                                  Title="FPS"
                                  Value="{Binding Fps}"
                                  Unit=""
@@ -492,6 +529,8 @@
                                  TileBrush="{Binding TileBrush}"
                                  TitleBrush="{Binding TitleBrush}"
                                  UnitBrush="{Binding UnitBrush}"/>
+
+            </UniformGrid>
 
             <Border Grid.Row="10"
                     Grid.ColumnSpan="3"

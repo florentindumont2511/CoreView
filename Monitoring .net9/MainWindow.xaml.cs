@@ -13,14 +13,22 @@ namespace Monitoring_net9
     public partial class MainWindow : Window
     {
         private readonly MonitoringManager monitoringManager;
-        private readonly DispatcherTimer timer;
+        private readonly DispatcherTimer renderTimer;
         private readonly DispatcherTimer hwInfoRestartTimer;
         private readonly TaskbarIcon trayIcon;
         private readonly MainWindowViewModel viewModel = new();
+        private readonly CancellationTokenSource monitoringCancellation = new();
+        private readonly SemaphoreSlim monitoringGate = new(1, 1);
+        private readonly object latestDataSync = new();
 
         private SettingsWindow? settingsWindow;
         private AppSettings settings;
         private bool isRestartingHwInfo;
+        private Task? monitoringTask;
+        private SensorData? latestSensorData;
+        private bool latestHwInfoStatus;
+        private long latestSensorVersion;
+        private long renderedSensorVersion;
 
         public MainWindow()
         {
@@ -42,12 +50,15 @@ namespace Monitoring_net9
             monitoringManager = new MonitoringManager();
             monitoringManager.Initialize();
 
-            timer = new DispatcherTimer
+            renderTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(1)
+                Interval = TimeSpan.FromMilliseconds(250)
             };
-            timer.Tick += Timer_Tick;
-            timer.Start();
+            renderTimer.Tick += RenderTimer_Tick;
+            renderTimer.Start();
+
+            monitoringTask =
+                Task.Run(() => MonitoringLoopAsync(monitoringCancellation.Token));
 
             hwInfoRestartTimer = new DispatcherTimer
             {
@@ -170,6 +181,13 @@ namespace Monitoring_net9
             viewModel.ResetMonitoringData();
         }
 
+        private void ResetMonitoringDataButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            ResetMonitoringData();
+        }
+
         private void OpenSettingsWindow()
         {
             try
@@ -209,7 +227,16 @@ namespace Monitoring_net9
 
             try
             {
-                await monitoringManager.RestartHwInfoAsync();
+                await monitoringGate.WaitAsync();
+
+                try
+                {
+                    await monitoringManager.RestartHwInfoAsync();
+                }
+                finally
+                {
+                    monitoringGate.Release();
+                }
             }
             catch (Exception ex)
             {
@@ -240,10 +267,14 @@ namespace Monitoring_net9
         {
             try
             {
-                timer.Stop();
+                renderTimer.Stop();
                 hwInfoRestartTimer.Stop();
+                monitoringCancellation.Cancel();
+                monitoringTask?.Wait(TimeSpan.FromSeconds(3));
                 trayIcon.Dispose();
                 monitoringManager.Dispose();
+                monitoringGate.Dispose();
+                monitoringCancellation.Dispose();
             }
             catch (Exception ex)
             {
@@ -253,14 +284,83 @@ namespace Monitoring_net9
             base.OnClosed(e);
         }
 
-        private void Timer_Tick(object? sender, EventArgs e)
+        private async Task MonitoringLoopAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await monitoringGate.WaitAsync(cancellationToken);
+
+                    try
+                    {
+                        monitoringManager.Update();
+                        SensorData snapshot = monitoringManager.Data.Copy();
+                        bool isHwInfoConnected = monitoringManager.IsHwInfoConnected;
+
+                        lock (latestDataSync)
+                        {
+                            latestSensorData = snapshot;
+                            latestHwInfoStatus = isHwInfoConnected;
+                            latestSensorVersion++;
+                        }
+                    }
+                    finally
+                    {
+                        monitoringGate.Release();
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    LoggerService.Log($"Sensor collection error: {ex.Message}");
+                }
+
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
+        private void RenderTimer_Tick(object? sender, EventArgs e)
         {
             try
             {
                 viewModel.UpdateClock(DateTime.Now);
-                monitoringManager.Update();
-                viewModel.UpdateHwInfoStatus(monitoringManager.IsHwInfoConnected);
-                viewModel.UpdateSensors(monitoringManager.Data);
+
+                SensorData? snapshot;
+                bool isHwInfoConnected;
+                long version;
+
+                lock (latestDataSync)
+                {
+                    version = latestSensorVersion;
+
+                    if (version == renderedSensorVersion)
+                    {
+                        return;
+                    }
+
+                    snapshot = latestSensorData;
+                    isHwInfoConnected = latestHwInfoStatus;
+                }
+
+                if (snapshot == null)
+                {
+                    return;
+                }
+
+                viewModel.UpdateHwInfoStatus(isHwInfoConnected);
+                viewModel.UpdateSensors(snapshot);
+                renderedSensorVersion = version;
             }
             catch (Exception ex)
             {

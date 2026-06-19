@@ -57,5 +57,42 @@
         {
             SourceDetails[metricId] = source;
         }
+
+        public SensorData Copy()
+        {
+            var copy = new SensorData
+            {
+                CpuName = CpuName,
+                CpuUsage = CpuUsage,
+                CpuTemperature = CpuTemperature,
+                CpuClock = CpuClock,
+                CpuPower = CpuPower,
+                CpuTension = CpuTension,
+                RamUsed = RamUsed,
+                RamTotal = RamTotal,
+                RamUsagePercent = RamUsagePercent,
+                RamClock = RamClock,
+                GpuName = GpuName,
+                GpuUsage = GpuUsage,
+                GpuTemperature = GpuTemperature,
+                GpuMemoryUsedGB = GpuMemoryUsedGB,
+                GpuMemoryTotalGB = GpuMemoryTotalGB,
+                GpuMemoryUsagePercent = GpuMemoryUsagePercent,
+                GpuClock = GpuClock,
+                GpuHotspot = GpuHotspot,
+                GpuMemoryJunction = GpuMemoryJunction,
+                GpuPower = GpuPower,
+                GpuTension = GpuTension,
+                Fps = Fps,
+                TotalPower = TotalPower
+            };
+
+            foreach ((string metricId, string source) in SourceDetails)
+            {
+                copy.SourceDetails[metricId] = source;
+            }
+
+            return copy;
+        }
     }
 }

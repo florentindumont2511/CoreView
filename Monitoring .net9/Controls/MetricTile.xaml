@@ -21,6 +21,10 @@
         </ToolTip>
     </UserControl.ToolTip>
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+
     <Border Background="{Binding TileBrush, ElementName=Root}"
             CornerRadius="14"
             Padding="6">
@@ -49,6 +53,15 @@
                                                  Value="False">
                                         <Setter Property="Width" Value="0"/>
                                     </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding ShowMinimumStatistic, ElementName=Root}"
+                                                       Value="False"/>
+                                            <Condition Binding="{Binding ShowMaximumStatistic, ElementName=Root}"
+                                                       Value="False"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Width" Value="0"/>
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </ColumnDefinition.Style>
@@ -88,7 +101,8 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0">
+                    <Grid Grid.Row="0"
+                          Visibility="{Binding ShowMaximumStatistic, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34"/>
                             <ColumnDefinition Width="*"/>
@@ -111,7 +125,8 @@
                         </Viewbox>
                     </Grid>
 
-                    <Grid Grid.Row="1">
+                    <Grid Grid.Row="1"
+                          Visibility="{Binding ShowMinimumStatistic, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34"/>
                             <ColumnDefinition Width="*"/>
@@ -141,11 +156,15 @@
                 <Grid.Style>
                     <Style TargetType="Grid">
                         <Setter Property="Visibility" Value="Visible"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ShowStatistics, ElementName=Root}"
-                                         Value="False">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                            </DataTrigger>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowStatistics, ElementName=Root}"
+                                             Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ShowAverageStatistic, ElementName=Root}"
+                                             Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Grid.Style>

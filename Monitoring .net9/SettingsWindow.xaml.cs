@@ -54,6 +54,8 @@ namespace Monitoring_net9
                 ?? ThemeComboBox.Items[0];
 
             SelectDateTimeLanguage(settings.DateTimeLanguage);
+            SevenInchModeCheckBox.IsChecked = settings.SevenInchMode;
+            SelectRamFrequencyMode(settings.RamFrequencyMode);
 
             DashboardScaleTextBox.Text =
                 settings.DashboardScale.ToString(
@@ -92,6 +94,12 @@ namespace Monitoring_net9
                 settings.ShowAdvancedSensors;
             ShowMiniGraphsCheckBox.IsChecked =
                 settings.ShowMiniGraphs;
+            ShowMinimumStatisticCheckBox.IsChecked =
+                settings.ShowMinimumStatistic;
+            ShowAverageStatisticCheckBox.IsChecked =
+                settings.ShowAverageStatistic;
+            ShowMaximumStatisticCheckBox.IsChecked =
+                settings.ShowMaximumStatistic;
             ApplyGraphOptions(settings);
 
             SelectHistoryDuration(settings.HistoryDurationSeconds);
@@ -126,6 +134,10 @@ namespace Monitoring_net9
 
                 settings.DateTimeLanguage =
                     ReadDateTimeLanguage();
+                settings.SevenInchMode =
+                    SevenInchModeCheckBox.IsChecked == true;
+                settings.RamFrequencyMode =
+                    ReadRamFrequencyMode();
 
                 settings.DashboardScalePreset =
                     ReadDashboardScalePreset();
@@ -148,6 +160,12 @@ namespace Monitoring_net9
                     ShowAdvancedSensorsCheckBox.IsChecked == true;
                 settings.ShowMiniGraphs =
                     ShowMiniGraphsCheckBox.IsChecked == true;
+                settings.ShowMinimumStatistic =
+                    ShowMinimumStatisticCheckBox.IsChecked == true;
+                settings.ShowAverageStatistic =
+                    ShowAverageStatisticCheckBox.IsChecked == true;
+                settings.ShowMaximumStatistic =
+                    ShowMaximumStatisticCheckBox.IsChecked == true;
                 settings.ShowCpuUsageGraph =
                     ShowCpuUsageGraphCheckBox.IsChecked == true;
                 settings.ShowCpuTemperatureGraph =
@@ -244,6 +262,8 @@ namespace Monitoring_net9
                 ?? ThemeComboBox.Items[0];
 
             SelectDateTimeLanguage(settings.DateTimeLanguage);
+            SevenInchModeCheckBox.IsChecked = settings.SevenInchMode;
+            SelectRamFrequencyMode(settings.RamFrequencyMode);
 
             DashboardScaleTextBox.Text =
                 settings.DashboardScale.ToString(
@@ -282,6 +302,12 @@ namespace Monitoring_net9
                 settings.ShowAdvancedSensors;
             ShowMiniGraphsCheckBox.IsChecked =
                 settings.ShowMiniGraphs;
+            ShowMinimumStatisticCheckBox.IsChecked =
+                settings.ShowMinimumStatistic;
+            ShowAverageStatisticCheckBox.IsChecked =
+                settings.ShowAverageStatistic;
+            ShowMaximumStatisticCheckBox.IsChecked =
+                settings.ShowMaximumStatistic;
             ApplyGraphOptions(settings);
             ApplySensorOptions(settings);
             SelectHistoryDuration(settings.HistoryDurationSeconds);
@@ -354,6 +380,16 @@ namespace Monitoring_net9
             return new AppSettings().DateTimeLanguage;
         }
 
+        private string ReadRamFrequencyMode()
+        {
+            if (RamFrequencyModeComboBox.SelectedItem is WpfComboBoxItem item)
+            {
+                return item.Tag?.ToString() ?? "Clock";
+            }
+
+            return new AppSettings().RamFrequencyMode;
+        }
+
         private void SelectDateTimeLanguage(string language)
         {
             DateTimeLanguageComboBox.SelectedItem =
@@ -361,6 +397,15 @@ namespace Monitoring_net9
                     .OfType<WpfComboBoxItem>()
                     .FirstOrDefault(item => item.Tag?.ToString() == language)
                 ?? DateTimeLanguageComboBox.Items[0];
+        }
+
+        private void SelectRamFrequencyMode(string mode)
+        {
+            RamFrequencyModeComboBox.SelectedItem =
+                RamFrequencyModeComboBox.Items
+                    .OfType<WpfComboBoxItem>()
+                    .FirstOrDefault(item => item.Tag?.ToString() == mode)
+                ?? RamFrequencyModeComboBox.Items[0];
         }
 
         private string ReadDashboardScalePreset()
