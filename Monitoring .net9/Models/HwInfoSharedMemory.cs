@@ -52,4 +52,18 @@ namespace Monitoring_net9.Models
 
         public double ValueAvg;
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+    public struct HwInfoSensorElement
+    {
+        public uint SensorId;
+
+        public uint SensorInstance;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string SensorNameOrig;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string SensorNameUser;
+    }
 }

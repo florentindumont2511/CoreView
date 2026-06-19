@@ -44,6 +44,13 @@ namespace Monitoring_net9.Controls
                 typeof(MetricTile),
                 new PropertyMetadata(true));
 
+        public static readonly DependencyProperty SourceInfoProperty =
+            DependencyProperty.Register(
+                nameof(SourceInfo),
+                typeof(string),
+                typeof(MetricTile),
+                new PropertyMetadata("Source indisponible"));
+
         public static readonly DependencyProperty MinimumStatisticProperty =
             DependencyProperty.Register(
                 nameof(MinimumStatistic),
@@ -132,6 +139,12 @@ namespace Monitoring_net9.Controls
         {
             get => (bool)GetValue(ShowStatisticsProperty);
             set => SetValue(ShowStatisticsProperty, value);
+        }
+
+        public string SourceInfo
+        {
+            get => (string)GetValue(SourceInfoProperty);
+            set => SetValue(SourceInfoProperty, value);
         }
 
         public string MinimumStatistic

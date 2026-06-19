@@ -180,6 +180,37 @@ namespace Monitoring_net9.Services
                 sensor.Name == "CPU Total")
             {
                 Data.CpuUsage = sensor.Value ?? 0;
+                SetSource("CpuUsage", sensor);
+            }
+
+            if (sensor.SensorType == SensorType.Temperature &&
+                (sensor.Name.Contains("Package", StringComparison.OrdinalIgnoreCase) ||
+                 sensor.Name.Contains("Tctl", StringComparison.OrdinalIgnoreCase)))
+            {
+                Data.CpuTemperature = sensor.Value ?? 0;
+                SetSource("CpuTemperature", sensor);
+            }
+
+            if (sensor.SensorType == SensorType.Clock &&
+                (sensor.Name.Contains("Core #1", StringComparison.OrdinalIgnoreCase) ||
+                 sensor.Name.Contains("Core 1", StringComparison.OrdinalIgnoreCase)))
+            {
+                Data.CpuClock = sensor.Value ?? 0;
+                SetSource("CpuClock", sensor);
+            }
+
+            if (sensor.SensorType == SensorType.Power &&
+                sensor.Name.Contains("Package", StringComparison.OrdinalIgnoreCase))
+            {
+                Data.CpuPower = sensor.Value ?? 0;
+                SetSource("CpuPower", sensor);
+            }
+
+            if (sensor.SensorType == SensorType.Voltage &&
+                sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
+            {
+                Data.CpuTension = sensor.Value ?? 0;
+                SetSource("CpuTension", sensor);
             }
         }
 
@@ -190,12 +221,14 @@ namespace Monitoring_net9.Services
                 sensor.Name.Contains("Memory Used"))
             {
                 Data.RamUsed = sensor.Value ?? 0;
+                SetSource("RamUsed", sensor);
             }
 
             if (sensor.SensorType == SensorType.Load &&
                 sensor.Name.Contains("Memory"))
             {
                 Data.RamUsagePercent = sensor.Value ?? 0;
+                SetSource("RamUsagePercent", sensor);
             }
 
             if ((sensor.SensorType == SensorType.Data ||
@@ -207,6 +240,9 @@ namespace Monitoring_net9.Services
                 if (Data.RamUsed > 0 && available > 0)
                 {
                     Data.RamTotal = Data.RamUsed + available;
+                    Data.SetSource(
+                        "RamTotal",
+                        "LibreHardwareMonitor • Memory Used + Memory Available");
                 }
             }
 
@@ -215,6 +251,9 @@ namespace Monitoring_net9.Services
                 Data.RamUsagePercent > 0)
             {
                 Data.RamTotal = Data.RamUsed / (Data.RamUsagePercent / 100);
+                Data.SetSource(
+                    "RamTotal",
+                    "Calculé • RAM utilisée / pourcentage utilisé");
             }
         }
 
@@ -224,17 +263,44 @@ namespace Monitoring_net9.Services
                 sensor.Name == "GPU Core")
             {
                 Data.GpuUsage = sensor.Value ?? 0;
+                SetSource("GpuUsage", sensor);
             }
 
             if (sensor.SensorType == SensorType.Load &&
                 sensor.Name.Contains("GPU Memory"))
             {
                 Data.GpuMemoryUsagePercent = sensor.Value ?? 0;
+                SetSource("GpuMemoryUsagePercent", sensor);
             }
 
-            if (sensor.SensorType == SensorType.Temperature)
+            if (sensor.SensorType == SensorType.Temperature &&
+                (sensor.Name.Contains("GPU Core", StringComparison.OrdinalIgnoreCase) ||
+                 sensor.Name.Equals("GPU", StringComparison.OrdinalIgnoreCase)))
             {
                 Data.GpuTemperature = sensor.Value ?? 0;
+                SetSource("GpuTemperature", sensor);
+            }
+
+            if (sensor.SensorType == SensorType.Clock &&
+                sensor.Name.Contains("GPU Core", StringComparison.OrdinalIgnoreCase))
+            {
+                Data.GpuClock = sensor.Value ?? 0;
+                SetSource("GpuClock", sensor);
+            }
+
+            if (sensor.SensorType == SensorType.Power &&
+                (sensor.Name.Contains("Package", StringComparison.OrdinalIgnoreCase) ||
+                 sensor.Name.Contains("GPU", StringComparison.OrdinalIgnoreCase)))
+            {
+                Data.GpuPower = sensor.Value ?? 0;
+                SetSource("GpuPower", sensor);
+            }
+
+            if (sensor.SensorType == SensorType.Voltage &&
+                sensor.Name.Contains("GPU Core", StringComparison.OrdinalIgnoreCase))
+            {
+                Data.GpuTension = sensor.Value ?? 0;
+                SetSource("GpuTension", sensor);
             }
 
             if ((sensor.SensorType == SensorType.SmallData ||
@@ -242,6 +308,7 @@ namespace Monitoring_net9.Services
                 sensor.Name.Contains("GPU Memory Used"))
             {
                 Data.GpuMemoryUsedGB = (sensor.Value ?? 0) / 1024f;
+                SetSource("GpuMemoryUsed", sensor);
             }
 
             if ((sensor.SensorType == SensorType.SmallData ||
@@ -249,6 +316,7 @@ namespace Monitoring_net9.Services
                 sensor.Name.Contains("GPU Memory Total"))
             {
                 Data.GpuMemoryTotalGB = (sensor.Value ?? 0) / 1024f;
+                SetSource("GpuMemoryTotal", sensor);
             }
 
             if (Data.GpuMemoryTotalGB <= 0 &&
@@ -257,7 +325,17 @@ namespace Monitoring_net9.Services
             {
                 Data.GpuMemoryTotalGB =
                     Data.GpuMemoryUsedGB / (Data.GpuMemoryUsagePercent / 100);
+                Data.SetSource(
+                    "GpuMemoryTotal",
+                    "Calculé • VRAM utilisée / pourcentage utilisé");
             }
+        }
+
+        private void SetSource(string metricId, ISensor sensor)
+        {
+            Data.SetSource(
+                metricId,
+                $"LibreHardwareMonitor • {sensor.Hardware.Name} • {sensor.Name}");
         }
     }
 }

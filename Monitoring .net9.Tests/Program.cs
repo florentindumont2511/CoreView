@@ -19,7 +19,8 @@ var tests = new List<(string Name, Action Test)>
     ("applies sensor and graph visibility choices", AppliesSensorAndGraphVisibilityChoices),
     ("applies usage and temperature colors", AppliesUsageAndTemperatureColors),
     ("tracks minimum average and maximum values", TracksMinimumAverageAndMaximumValues),
-    ("resets statistics and graph history", ResetsStatisticsAndGraphHistory)
+    ("resets statistics and graph history", ResetsStatisticsAndGraphHistory),
+    ("exposes sensor source details", ExposesSensorSourceDetails)
 };
 
 foreach ((string name, Action test) in tests)
@@ -353,6 +354,32 @@ static void ResetsStatisticsAndGraphHistory()
     AssertEqual(0, viewModel.CpuUsageHistoryPoints.Count);
     AssertEqual(0, viewModel.GpuTemperatureHistoryPoints.Count);
     AssertTrue(viewModel.CpuUsageHistoryGeometry.IsEmpty());
+}
+
+static void ExposesSensorSourceDetails()
+{
+    var viewModel = new MainWindowViewModel();
+    var data = new SensorData
+    {
+        CpuUsage = 25,
+        TotalPower = 150
+    };
+    data.SetSource(
+        "CpuUsage",
+        "LibreHardwareMonitor • AMD Ryzen Test • CPU Total");
+    data.SetSource(
+        "TotalPower",
+        "Calculé • puissance CPU + puissance GPU");
+
+    viewModel.UpdateSensors(data);
+
+    AssertEqual(
+        "LibreHardwareMonitor • AMD Ryzen Test • CPU Total",
+        viewModel.SensorSources["CpuUsage"]);
+    AssertEqual(
+        "Calculé • puissance CPU + puissance GPU",
+        viewModel.SensorSources["TotalPower"]);
+    AssertEqual("Source indisponible", viewModel.SensorSources["GpuClock"]);
 }
 
 static void AssertEqual<T>(

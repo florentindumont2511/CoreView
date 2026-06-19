@@ -143,34 +143,154 @@ namespace Monitoring_net9.Services
 
         private void MergeData()
         {
+            Data.SourceDetails.Clear();
             Data.CpuName = hardwareMonitorService.Data.CpuName;
             Data.GpuName = hardwareMonitorService.Data.GpuName;
-            Data.CpuUsage = hardwareMonitorService.Data.CpuUsage;
-            Data.RamUsed = hardwareMonitorService.Data.RamUsed;
-            Data.RamTotal = hardwareMonitorService.Data.RamTotal;
-            Data.RamUsagePercent = hardwareMonitorService.Data.RamUsagePercent;
-            Data.GpuUsage = hardwareMonitorService.Data.GpuUsage;
-            Data.GpuMemoryUsedGB = hardwareMonitorService.Data.GpuMemoryUsedGB;
-            Data.GpuMemoryTotalGB = hardwareMonitorService.Data.GpuMemoryTotalGB;
+
+            Data.CpuUsage = CopyHardwareValue("CpuUsage", 0, 100, true);
+            Data.RamUsed = CopyHardwareValue("RamUsed", 0, 4096, true);
+            Data.RamTotal = CopyHardwareValue("RamTotal", 0.1, 4096);
+            Data.RamUsagePercent =
+                CopyHardwareValue("RamUsagePercent", 0, 100, true);
+            Data.GpuUsage = CopyHardwareValue("GpuUsage", 0, 100, true);
+            Data.GpuMemoryUsedGB =
+                CopyHardwareValue("GpuMemoryUsed", 0, 256, true);
+            Data.GpuMemoryTotalGB =
+                CopyHardwareValue("GpuMemoryTotal", 0.1, 256);
             Data.GpuMemoryUsagePercent =
                 CalculatePercent(
                     Data.GpuMemoryUsedGB,
                     Data.GpuMemoryTotalGB,
                     hardwareMonitorService.Data.GpuMemoryUsagePercent);
 
-            Data.CpuTemperature = hwInfoService.Data.CpuTemperature;
-            Data.CpuClock = hwInfoService.Data.CpuClock;
-            Data.CpuPower = hwInfoService.Data.CpuPower;
-            Data.CpuTension = hwInfoService.Data.CpuTension;
-            Data.RamClock = hwInfoService.Data.RamClock;
-            Data.GpuTemperature = hwInfoService.Data.GpuTemperature;
-            Data.GpuClock = hwInfoService.Data.GpuClock;
-            Data.GpuHotspot = hwInfoService.Data.GpuHotspot;
-            Data.GpuMemoryJunction = hwInfoService.Data.GpuMemoryJunction;
-            Data.GpuPower = hwInfoService.Data.GpuPower;
-            Data.GpuTension = hwInfoService.Data.GpuTension;
-            Data.Fps = hwInfoService.Data.Fps;
+            Data.SetSource(
+                "GpuMemoryUsagePercent",
+                IsPlausible(Data.GpuMemoryUsedGB, 0, 256, true) &&
+                IsPlausible(Data.GpuMemoryTotalGB, 0.1, 256)
+                    ? "Calculé • VRAM utilisée / VRAM totale"
+                    : SourceOf(
+                        hardwareMonitorService.Data,
+                        "GpuMemoryUsagePercent"));
+
+            Data.CpuTemperature =
+                SelectPreferred("CpuTemperature", 1, 115);
+            Data.CpuClock = SelectPreferred("CpuClock", 100, 10000);
+            Data.CpuPower = SelectPreferred("CpuPower", 0.1, 2000);
+            Data.CpuTension = SelectPreferred("CpuTension", 0.05, 3);
+            Data.RamClock = SelectPreferred("RamClock", 100, 10000);
+            Data.GpuTemperature =
+                SelectPreferred("GpuTemperature", 1, 125);
+            Data.GpuClock = SelectPreferred("GpuClock", 0, 5000, true);
+            Data.GpuHotspot = SelectPreferred("GpuHotspot", 1, 130);
+            Data.GpuMemoryJunction =
+                SelectPreferred("GpuMemoryJunction", 1, 130);
+            Data.GpuPower = SelectPreferred("GpuPower", 0.1, 2000);
+            Data.GpuTension = SelectPreferred("GpuTension", 0.01, 3);
+            Data.Fps = SelectPreferred("Fps", 0, 2000, true);
             Data.TotalPower = Data.CpuPower + Data.GpuPower;
+            Data.SetSource(
+                "TotalPower",
+                "Calculé • puissance CPU + puissance GPU");
+        }
+
+        private double CopyHardwareValue(
+            string metricId,
+            double minimum,
+            double maximum,
+            bool allowZero = false)
+        {
+            double value = GetMetricValue(hardwareMonitorService.Data, metricId);
+
+            if (!hardwareMonitorService.Data.SourceDetails.ContainsKey(metricId) ||
+                !IsPlausible(value, minimum, maximum, allowZero))
+            {
+                Data.SetSource(metricId, "Indisponible • aucune source valide");
+                return 0;
+            }
+
+            Data.SetSource(
+                metricId,
+                SourceOf(hardwareMonitorService.Data, metricId));
+            return value;
+        }
+
+        private double SelectPreferred(
+            string metricId,
+            double minimum,
+            double maximum,
+            bool allowZero = false)
+        {
+            double hwInfoValue = GetMetricValue(hwInfoService.Data, metricId);
+
+            if (hwInfoService.IsConnected &&
+                hwInfoService.Data.SourceDetails.ContainsKey(metricId) &&
+                IsPlausible(hwInfoValue, minimum, maximum, allowZero))
+            {
+                Data.SetSource(metricId, SourceOf(hwInfoService.Data, metricId));
+                return hwInfoValue;
+            }
+
+            double fallbackValue =
+                GetMetricValue(hardwareMonitorService.Data, metricId);
+
+            if (hardwareMonitorService.Data.SourceDetails.ContainsKey(metricId) &&
+                IsPlausible(fallbackValue, minimum, maximum, allowZero))
+            {
+                Data.SetSource(
+                    metricId,
+                    $"{SourceOf(hardwareMonitorService.Data, metricId)} • secours");
+                return fallbackValue;
+            }
+
+            Data.SetSource(metricId, "Indisponible • aucune source valide");
+            return 0;
+        }
+
+        private static double GetMetricValue(SensorData data, string metricId)
+        {
+            return metricId switch
+            {
+                "CpuUsage" => data.CpuUsage,
+                "CpuTemperature" => data.CpuTemperature,
+                "CpuClock" => data.CpuClock,
+                "CpuPower" => data.CpuPower,
+                "CpuTension" => data.CpuTension,
+                "RamUsed" => data.RamUsed,
+                "RamTotal" => data.RamTotal,
+                "RamUsagePercent" => data.RamUsagePercent,
+                "RamClock" => data.RamClock,
+                "GpuUsage" => data.GpuUsage,
+                "GpuTemperature" => data.GpuTemperature,
+                "GpuMemoryUsed" => data.GpuMemoryUsedGB,
+                "GpuMemoryTotal" => data.GpuMemoryTotalGB,
+                "GpuMemoryUsagePercent" => data.GpuMemoryUsagePercent,
+                "GpuClock" => data.GpuClock,
+                "GpuHotspot" => data.GpuHotspot,
+                "GpuMemoryJunction" => data.GpuMemoryJunction,
+                "GpuPower" => data.GpuPower,
+                "GpuTension" => data.GpuTension,
+                "Fps" => data.Fps,
+                "TotalPower" => data.TotalPower,
+                _ => 0
+            };
+        }
+
+        private static bool IsPlausible(
+            double value,
+            double minimum,
+            double maximum,
+            bool allowZero = false)
+        {
+            return double.IsFinite(value) &&
+                   value <= maximum &&
+                   (allowZero ? value >= minimum : value > minimum);
+        }
+
+        private static string SourceOf(SensorData data, string metricId)
+        {
+            return data.SourceDetails.TryGetValue(metricId, out string? source)
+                ? source
+                : "Source non détaillée";
         }
 
         private static double CalculatePercent(

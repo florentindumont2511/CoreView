@@ -17,6 +17,8 @@ namespace Monitoring_net9.Services
 
         public List<HwInfoReadingElement> Readings { get; } = [];
 
+        public Dictionary<uint, HwInfoSensorElement> Sensors { get; } = [];
+
         public bool IsConnected { get; private set; }
 
         public bool Connect()
@@ -102,8 +104,10 @@ namespace Monitoring_net9.Services
             try
             {
                 Readings.Clear();
+                Sensors.Clear();
 
                 using var accessor = memoryFile.CreateViewAccessor();
+                ReadSensors(accessor);
                 int elementSize = Marshal.SizeOf<HwInfoReadingElement>();
 
                 for (int i = 0; i < Header.ReadingElementCount; i++)
@@ -132,17 +136,42 @@ namespace Monitoring_net9.Services
 
         public void UpdateCpuTemperature()
         {
+            Data.CpuTemperature = 0;
+            Data.SourceDetails.Remove("CpuTemperature");
+
             var cpuTempReading = Readings.FirstOrDefault(
-                r => ContainsLabel(r, "Tctl/Tdie"));
+                r => IsCpuReading(r) && ContainsLabel(r, "Tctl/Tdie"));
 
             if (!string.IsNullOrEmpty(cpuTempReading.LabelOrig))
             {
                 Data.CpuTemperature = cpuTempReading.Value;
+                SetSource("CpuTemperature", cpuTempReading);
             }
         }
 
         public void UpdateAdvancedSensors()
         {
+            Data.CpuClock = 0;
+            Data.CpuPower = 0;
+            Data.CpuTension = 0;
+            Data.RamClock = 0;
+            Data.GpuTemperature = 0;
+            Data.GpuClock = 0;
+            Data.GpuHotspot = 0;
+            Data.GpuMemoryJunction = 0;
+            Data.GpuPower = 0;
+            Data.GpuTension = 0;
+            Data.Fps = 0;
+            foreach (string metricId in new[]
+                     {
+                         "CpuClock", "CpuPower", "CpuTension", "RamClock",
+                         "GpuTemperature", "GpuClock", "GpuHotspot",
+                         "GpuMemoryJunction", "GpuPower", "GpuTension", "Fps"
+                     })
+            {
+                Data.SourceDetails.Remove(metricId);
+            }
+
             double gpuPowerCore = 0;
             double gpuPowerSoc = 0;
 
@@ -155,6 +184,13 @@ namespace Monitoring_net9.Services
             }
 
             Data.GpuPower = gpuPowerCore + gpuPowerSoc;
+
+            if (Data.GpuPower > 0)
+            {
+                Data.SetSource(
+                    "GpuPower",
+                    "HWiNFO • GPU • Core Input Power + SoC Input Power");
+            }
         }
 
         private static T ReadStruct<T>(
@@ -179,19 +215,50 @@ namespace Monitoring_net9.Services
             }
         }
 
+        private void ReadSensors(MemoryMappedViewAccessor accessor)
+        {
+            int sensorSize = Marshal.SizeOf<HwInfoSensorElement>();
+
+            if (Header.SensorElementSize < sensorSize)
+            {
+                return;
+            }
+
+            for (uint index = 0; index < Header.SensorElementCount; index++)
+            {
+                long offset =
+                    Header.SensorSectionOffset +
+                    (index * Header.SensorElementSize);
+
+                Sensors[index] =
+                    ReadStruct<HwInfoSensorElement>(
+                        accessor,
+                        offset,
+                        sensorSize);
+            }
+        }
+
         private void UpdateCpuSensor(HwInfoReadingElement reading)
         {
+            if (!IsCpuReading(reading))
+            {
+                return;
+            }
+
             if (ContainsLabel(reading, "Core 0 Clock (perf #1)"))
             {
                 Data.CpuClock = reading.Value;
+                SetSource("CpuClock", reading);
             }
             else if (ContainsLabel(reading, "CPU Package Power"))
             {
                 Data.CpuPower = reading.Value;
+                SetSource("CpuPower", reading);
             }
             else if (ContainsLabel(reading, "CPU VDDCR_VDD Voltage"))
             {
                 Data.CpuTension = reading.Value;
+                SetSource("CpuTension", reading);
             }
         }
 
@@ -200,21 +267,30 @@ namespace Monitoring_net9.Services
             ref double gpuPowerCore,
             ref double gpuPowerSoc)
         {
+            if (!IsGpuReading(reading))
+            {
+                return;
+            }
+
             if (ContainsLabel(reading, "GPU Clock (Effective)"))
             {
                 Data.GpuClock = reading.Value;
+                SetSource("GpuClock", reading);
             }
             else if (ContainsLabel(reading, "GPU Temperature"))
             {
                 Data.GpuTemperature = reading.Value;
+                SetSource("GpuTemperature", reading);
             }
             else if (ContainsLabel(reading, "GPU Hot Spot"))
             {
                 Data.GpuHotspot = reading.Value;
+                SetSource("GpuHotspot", reading);
             }
             else if (ContainsLabel(reading, "GPU Memory Junction"))
             {
                 Data.GpuMemoryJunction = reading.Value;
+                SetSource("GpuMemoryJunction", reading);
             }
             else if (ContainsLabel(reading, "GPU Core Input Power"))
             {
@@ -227,6 +303,7 @@ namespace Monitoring_net9.Services
             else if (ContainsLabel(reading, "GPU Core Voltage"))
             {
                 Data.GpuTension = reading.Value;
+                SetSource("GpuTension", reading);
             }
         }
 
@@ -236,17 +313,89 @@ namespace Monitoring_net9.Services
                 MatchesLabel(reading, "DRAM Frequency"))
             {
                 Data.RamClock = reading.Value;
+                SetSource("RamClock", reading);
             }
         }
 
         private void UpdateFrameRateSensor(HwInfoReadingElement reading)
         {
-            if (ContainsLabel(reading, "Framerate") ||
+            if (IsFrameRateReading(reading) &&
+                (ContainsLabel(reading, "Framerate") ||
                 ContainsLabel(reading, "Frame Rate") ||
-                ContainsLabel(reading, "FPS"))
+                ContainsLabel(reading, "FPS")))
             {
                 Data.Fps = reading.Value;
+                SetSource("Fps", reading);
             }
+        }
+
+        private bool IsCpuReading(HwInfoReadingElement reading)
+        {
+            return IsReadingFrom(
+                reading,
+                name => name.Contains("CPU", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("Ryzen", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("Intel Core", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool IsGpuReading(HwInfoReadingElement reading)
+        {
+            return IsReadingFrom(
+                reading,
+                name => name.Contains("GPU", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("Radeon", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("GeForce", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool IsMemoryReading(HwInfoReadingElement reading)
+        {
+            return IsReadingFrom(
+                reading,
+                name => name.Contains("Memory Timings", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("System Memory", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool IsFrameRateReading(HwInfoReadingElement reading)
+        {
+            return IsReadingFrom(
+                reading,
+                name => name.Contains("PresentMon", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("RTSS", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("Frame", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool IsReadingFrom(
+            HwInfoReadingElement reading,
+            Func<string, bool> predicate)
+        {
+            if (!Sensors.TryGetValue(reading.SensorIndex, out HwInfoSensorElement sensor))
+            {
+                return Sensors.Count == 0;
+            }
+
+            string sensorName =
+                string.IsNullOrWhiteSpace(sensor.SensorNameUser)
+                    ? sensor.SensorNameOrig ?? string.Empty
+                    : sensor.SensorNameUser;
+
+            return predicate(sensorName);
+        }
+
+        private void SetSource(
+            string metricId,
+            HwInfoReadingElement reading)
+        {
+            string sensorName = Sensors.TryGetValue(
+                    reading.SensorIndex,
+                    out HwInfoSensorElement sensor)
+                ? string.IsNullOrWhiteSpace(sensor.SensorNameUser)
+                    ? sensor.SensorNameOrig
+                    : sensor.SensorNameUser
+                : "capteur non groupé";
+
+            Data.SetSource(
+                metricId,
+                $"HWiNFO • {sensorName} • {reading.LabelOrig}");
         }
 
         private static bool ContainsLabel(

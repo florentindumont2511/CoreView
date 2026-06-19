@@ -1,7 +1,25 @@
 <UserControl x:Class="Monitoring_net9.Controls.MetricTile"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Name="Root">
+             x:Name="Root"
+             ToolTipService.InitialShowDelay="250"
+             ToolTipService.ShowDuration="20000">
+
+    <UserControl.ToolTip>
+        <ToolTip Background="#F02B2B2B"
+                 Foreground="White"
+                 Padding="12">
+            <StackPanel MaxWidth="430">
+                <TextBlock Text="Source de la sonde"
+                           FontSize="16"
+                           FontWeight="Bold"
+                           Margin="0,0,0,4"/>
+                <TextBlock Text="{Binding PlacementTarget.SourceInfo, RelativeSource={RelativeSource AncestorType=ToolTip}}"
+                           FontSize="15"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+        </ToolTip>
+    </UserControl.ToolTip>
 
     <Border Background="{Binding TileBrush, ElementName=Root}"
             CornerRadius="14"

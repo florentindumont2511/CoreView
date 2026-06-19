@@ -2,6 +2,8 @@
 {
     public class SensorData
     {
+        public Dictionary<string, string> SourceDetails { get; } = [];
+
         // CPU
         public string CpuName { get; set; } = string.Empty;
 
@@ -50,5 +52,10 @@
         public double Fps { get; set; }
 
         public double TotalPower { get; set; }
+
+        public void SetSource(string metricId, string source)
+        {
+            SourceDetails[metricId] = source;
+        }
     }
 }

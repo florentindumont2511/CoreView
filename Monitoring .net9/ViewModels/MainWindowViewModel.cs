@@ -76,6 +76,10 @@ namespace Monitoring_net9.ViewModels
             SensorOptionDefinitions.All.ToDictionary(
                 option => option.Id,
                 _ => "Min --  Moy --  Max --");
+        private IReadOnlyDictionary<string, string> sensorSources =
+            SensorOptionDefinitions.All.ToDictionary(
+                option => option.Id,
+                _ => "Source indisponible");
         private PointCollection cpuUsageHistoryPoints = [];
         private PointCollection cpuUsageAreaPoints = [];
         private PointCollection cpuTemperatureHistoryPoints = [];
@@ -445,6 +449,12 @@ namespace Monitoring_net9.ViewModels
             private set => SetProperty(ref sensorStatistics, value);
         }
 
+        public IReadOnlyDictionary<string, string> SensorSources
+        {
+            get => sensorSources;
+            private set => SetProperty(ref sensorSources, value);
+        }
+
         public PointCollection CpuUsageHistoryPoints
         {
             get => cpuUsageHistoryPoints;
@@ -731,6 +741,15 @@ namespace Monitoring_net9.ViewModels
 
         public void UpdateSensors(SensorData data)
         {
+            SensorSources =
+                SensorOptionDefinitions.All.ToDictionary(
+                    option => option.Id,
+                    option => data.SourceDetails.TryGetValue(
+                        option.Id,
+                        out string? source)
+                            ? source
+                            : "Source indisponible");
+
             CpuName = FormatHardwareName(data.CpuName, "CPU");
             GpuName = FormatHardwareName(data.GpuName, "GPU");
             CpuUsage = FormatRequired(data.CpuUsage, "F1");
