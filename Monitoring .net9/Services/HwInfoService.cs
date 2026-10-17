@@ -1,13 +1,18 @@
 using Monitoring_net9.Models;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Monitoring_net9.Services
 {
     public class HwInfoService
     {
         private const string SharedMemoryName = "Global\\HWiNFO_SENS_SM2";
+        private static readonly Regex CoreTemperatureLabel = new(
+            @"^Core\s*\d+(?:\s*\(CCD\d+\))?$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
+        private readonly string sharedMemoryName;
         private MemoryMappedFile? memoryFile;
         private DateTime lastConnectErrorLog = DateTime.MinValue;
         private DateTime lastSuccessfulReadUtc = DateTime.MinValue;
@@ -26,6 +31,15 @@ namespace Monitoring_net9.Services
             IsConnected &&
             DateTime.UtcNow - lastSuccessfulReadUtc < TimeSpan.FromSeconds(5);
 
+        public HwInfoService() : this(SharedMemoryName)
+        {
+        }
+
+        internal HwInfoService(string sharedMemoryName)
+        {
+            this.sharedMemoryName = sharedMemoryName;
+        }
+
         public bool Connect()
         {
             if (memoryFile != null)
@@ -37,7 +51,9 @@ namespace Monitoring_net9.Services
             try
             {
                 memoryFile =
-                    MemoryMappedFile.OpenExisting(SharedMemoryName);
+                    MemoryMappedFile.OpenExisting(
+                        sharedMemoryName,
+                        MemoryMappedFileRights.Read);
 
                 IsConnected = true;
                 LoggerService.Log("HWiNFO connected");
@@ -81,7 +97,8 @@ namespace Monitoring_net9.Services
 
             try
             {
-                using var accessor = memoryFile.CreateViewAccessor();
+                using var accessor = memoryFile.CreateViewAccessor(
+                    0, 0, MemoryMappedFileAccess.Read);
 
                 Header = ReadStruct<HwInfoSharedMemHeader>(
                     accessor,
@@ -112,7 +129,8 @@ namespace Monitoring_net9.Services
                 Readings.Clear();
                 Sensors.Clear();
 
-                using var accessor = memoryFile.CreateViewAccessor();
+                using var accessor = memoryFile.CreateViewAccessor(
+                    0, 0, MemoryMappedFileAccess.Read);
                 ReadSensors(accessor);
                 int elementSize = Marshal.SizeOf<HwInfoReadingElement>();
 
@@ -147,14 +165,55 @@ namespace Monitoring_net9.Services
             Data.CpuTemperature = 0;
             Data.SourceDetails.Remove("CpuTemperature");
 
+            var coreAverageReading = Readings.FirstOrDefault(
+                r => IsValidCpuTemperature(r) &&
+                     (MatchesLabel(r, "Core Temperatures") ||
+                      MatchesLabel(r, "Core Temperatures (avg)")));
+
+            if (!string.IsNullOrEmpty(coreAverageReading.LabelOrig))
+            {
+                Data.CpuTemperature = coreAverageReading.Value;
+                SetSource("CpuTemperature", coreAverageReading);
+                return;
+            }
+
+            // HWiNFO's Core Temperatures header is not exported via shared memory.
+            var coreReadings = Readings.Where(
+                r => IsValidCpuTemperature(r) &&
+                     CoreTemperatureLabel.IsMatch(r.LabelOrig?.Trim() ?? string.Empty))
+                .ToArray();
+
+            if (coreReadings.Length > 0)
+            {
+                Data.CpuTemperature = coreReadings.Average(r => r.Value);
+                Data.SetSource(
+                    "CpuTemperature",
+                    $"HWiNFO • {GetSensorName(coreReadings[0])} • Core Temperatures " +
+                    $"(moyenne instantanée de {coreReadings.Length} sondes : " +
+                    $"{string.Join(", ", coreReadings.Select(r => r.LabelOrig))})");
+                return;
+            }
+
             var cpuTempReading = Readings.FirstOrDefault(
-                r => IsCpuReading(r) && ContainsLabel(r, "Tctl/Tdie"));
+                r => IsValidCpuTemperature(r) && ContainsLabel(r, "Tctl/Tdie"));
 
             if (!string.IsNullOrEmpty(cpuTempReading.LabelOrig))
             {
                 Data.CpuTemperature = cpuTempReading.Value;
                 SetSource("CpuTemperature", cpuTempReading);
+                Data.SetSource(
+                    "CpuTemperature",
+                    $"{Data.SourceDetails["CpuTemperature"]} • secours : températures des cœurs indisponibles");
             }
+        }
+
+        private bool IsValidCpuTemperature(HwInfoReadingElement reading)
+        {
+            return IsCpuReading(reading) &&
+                   reading.ReadingType == 1 &&
+                   double.IsFinite(reading.Value) &&
+                   reading.Value > 1 &&
+                   reading.Value <= 115;
         }
 
         public void UpdateAdvancedSensors()
@@ -393,17 +452,20 @@ namespace Monitoring_net9.Services
             string metricId,
             HwInfoReadingElement reading)
         {
-            string sensorName = Sensors.TryGetValue(
+            Data.SetSource(
+                metricId,
+                $"HWiNFO • {GetSensorName(reading)} • {reading.LabelOrig}");
+        }
+
+        private string GetSensorName(HwInfoReadingElement reading)
+        {
+            return Sensors.TryGetValue(
                     reading.SensorIndex,
                     out HwInfoSensorElement sensor)
                 ? string.IsNullOrWhiteSpace(sensor.SensorNameUser)
                     ? sensor.SensorNameOrig
                     : sensor.SensorNameUser
                 : "capteur non groupé";
-
-            Data.SetSource(
-                metricId,
-                $"HWiNFO • {sensorName} • {reading.LabelOrig}");
         }
 
         private static bool ContainsLabel(

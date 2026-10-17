@@ -1,7 +1,34 @@
 using Monitoring_net9.Models;
+using Monitoring_net9.Services;
 using Monitoring_net9.ViewModels;
+using System.IO;
+using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
+
+if (args.Contains("--verify-hwinfo"))
+{
+    var service = new HwInfoService();
+    try
+    {
+        if (!service.Connect() || !service.ReadHeader() || !service.ReadReadings())
+        {
+            throw new InvalidOperationException("HWiNFO shared memory could not be read. Check monitoring_log.txt.");
+        }
+
+        service.UpdateCpuTemperature();
+        service.UpdateAdvancedSensors();
+        Console.WriteLine($"HWiNFO connected: {service.Sensors.Count} sensor groups, {service.Readings.Count} readings.");
+        Console.WriteLine($"CPU temperature: {service.Data.CpuTemperature:F1} C");
+        Console.WriteLine(service.Data.SourceDetails.GetValueOrDefault("CpuTemperature", "CPU temperature unavailable"));
+    }
+    finally
+    {
+        service.Disconnect();
+    }
+    return;
+}
 
 var tests = new List<(string Name, Action Test)>
 {
@@ -23,7 +50,12 @@ var tests = new List<(string Name, Action Test)>
     ("exposes sensor source details", ExposesSensorSourceDetails),
     ("applies seven inch ram and statistic options", AppliesSevenInchRamAndStatisticOptions),
     ("suspends and restores hidden graph rendering", SuspendsAndRestoresHiddenGraphRendering),
-    ("reuses dictionaries and suppresses unchanged notifications", ReusesDictionariesAndSuppressesUnchangedNotifications)
+    ("reuses dictionaries and suppresses unchanged notifications", ReusesDictionariesAndSuppressesUnchangedNotifications),
+    ("averages current cpu core temperatures across ccds", AveragesCurrentCpuCoreTemperaturesAcrossCcds),
+    ("prefers an exported cpu core temperature average", PrefersAnExportedCpuCoreTemperatureAverage),
+    ("excludes unrelated and invalid core temperature readings", ExcludesUnrelatedAndInvalidCoreTemperatureReadings),
+    ("falls back when cpu core temperatures disappear", FallsBackWhenCpuCoreTemperaturesDisappear),
+    ("connects and reads read-only hwinfo shared memory", ConnectsAndReadsReadOnlyHwInfoSharedMemory)
 };
 
 foreach ((string name, Action test) in tests)
@@ -456,6 +488,169 @@ static void ReusesDictionariesAndSuppressesUnchangedNotifications()
     AssertTrue(ReferenceEquals(sources, viewModel.SensorSources));
     AssertTrue(ReferenceEquals(firstBrush, viewModel.CpuUsageBrush));
     AssertEqual(1, cpuUsageNotifications);
+}
+
+static void ConnectsAndReadsReadOnlyHwInfoSharedMemory()
+{
+    string memoryName = $"Local\\CoreView.Tests.{Guid.NewGuid():N}";
+    string filePath = Path.Combine(Path.GetTempPath(), $"CoreView.Tests.{Guid.NewGuid():N}.bin");
+    var header = new HwInfoSharedMemHeader
+    {
+        Signature = 0x53695748,
+        SensorElementSize = (uint)Marshal.SizeOf<HwInfoSensorElement>(),
+        ReadingElementSize = (uint)Marshal.SizeOf<HwInfoReadingElement>()
+    };
+    byte[] buffer = new byte[Marshal.SizeOf<HwInfoSharedMemHeader>()];
+    MemoryMarshal.Write(buffer.AsSpan(), in header);
+    var service = new HwInfoService(memoryName);
+
+    try
+    {
+        File.WriteAllBytes(filePath, buffer);
+        using var sharedMemory = MemoryMappedFile.CreateFromFile(
+            filePath, FileMode.Open, memoryName, 0, MemoryMappedFileAccess.Read);
+
+        AssertEqual(true, service.Connect());
+        AssertEqual(true, service.ReadHeader());
+        AssertEqual(header.Signature, service.Header.Signature);
+        AssertEqual(true, service.ReadReadings());
+        AssertEqual(true, service.HasFreshData);
+        service.Disconnect();
+        AssertEqual(false, service.IsConnected);
+        AssertEqual(false, service.HasFreshData);
+    }
+    finally
+    {
+        service.Disconnect();
+        File.Delete(filePath);
+    }
+}
+
+static void AveragesCurrentCpuCoreTemperaturesAcrossCcds()
+{
+    var service = CreateCpuTemperatureService();
+    service.Readings.AddRange(
+    [
+        CpuTemperatureReading("CPU (Tctl/Tdie)", 53.8),
+        CpuTemperatureReading("CPU CCD1 (Tdie)", 55.1),
+        CpuTemperatureReading("CPU CCD2 (Tdie)", 36.5),
+        CpuTemperatureReading("Core0 (CCD1)", 32),
+        CpuTemperatureReading("Core1 (CCD1)", 36),
+        CpuTemperatureReading("Core6 (CCD2)", 40)
+    ]);
+
+    service.UpdateCpuTemperature();
+
+    AssertEqual(36.0, service.Data.CpuTemperature);
+    AssertTrue(service.Data.SourceDetails["CpuTemperature"].Contains("Core Temperatures"));
+    AssertTrue(service.Data.SourceDetails["CpuTemperature"].Contains("3 sondes"));
+    AssertTrue(service.Data.SourceDetails["CpuTemperature"].Contains("Core6 (CCD2)"));
+}
+
+static void PrefersAnExportedCpuCoreTemperatureAverage()
+{
+    foreach (string label in new[] { "Core Temperatures", "Core Temperatures (avg)" })
+    {
+        var service = CreateCpuTemperatureService();
+        service.Readings.AddRange(
+        [
+            CpuTemperatureReading("CPU (Tctl/Tdie)", 53.8),
+            CpuTemperatureReading("Core 0", 30),
+            CpuTemperatureReading("Core 1", 40),
+            CpuTemperatureReading(label, 38.4)
+        ]);
+
+        service.UpdateCpuTemperature();
+
+        AssertEqual(38.4, service.Data.CpuTemperature);
+        AssertTrue(service.Data.SourceDetails["CpuTemperature"].EndsWith(label));
+    }
+}
+
+static void ExcludesUnrelatedAndInvalidCoreTemperatureReadings()
+{
+    var service = CreateCpuTemperatureService();
+    service.Sensors[1] = new HwInfoSensorElement
+    {
+        SensorNameOrig = "GPU [#0]: AMD Radeon Test"
+    };
+    var gpuReading = CpuTemperatureReading("Core Temperatures", 90);
+    gpuReading.SensorIndex = 1;
+    var clockReading = CpuTemperatureReading("Core 0", 100);
+    clockReading.ReadingType = 6;
+    service.Readings.AddRange(
+    [
+        gpuReading,
+        clockReading,
+        CpuTemperatureReading("Core Temperatures (avg)", double.NaN),
+        CpuTemperatureReading("Core0 (CCD1)", 0),
+        CpuTemperatureReading("Core1 (CCD1)", double.PositiveInfinity),
+        CpuTemperatureReading("Core2 (CCD1)", 200),
+        CpuTemperatureReading("Core3 (CCD1)", -10),
+        CpuTemperatureReading("Core4 (CCD1)", 40),
+        CpuTemperatureReading("Core5 (CCD2)", 44),
+        CpuTemperatureReading("L3 Cache (CCD1:CCX1)", 65),
+        CpuTemperatureReading("Core 0 Distance to TjMAX", 60),
+        CpuTemperatureReading("CPU (Tctl/Tdie)", 53.8)
+    ]);
+
+    service.UpdateCpuTemperature();
+
+    AssertEqual(42.0, service.Data.CpuTemperature);
+    AssertTrue(service.Data.SourceDetails["CpuTemperature"].Contains("2 sondes"));
+
+    service.Readings.Clear();
+    service.Readings.Add(CpuTemperatureReading("Core 0", 30));
+    service.Readings.Add(CpuTemperatureReading("Core 1", 40));
+    service.UpdateCpuTemperature();
+    AssertEqual(35.0, service.Data.CpuTemperature);
+}
+
+static void FallsBackWhenCpuCoreTemperaturesDisappear()
+{
+    var service = CreateCpuTemperatureService();
+    service.Readings.Add(CpuTemperatureReading("Core0 (CCD1)", 35));
+    service.UpdateCpuTemperature();
+    AssertEqual(35.0, service.Data.CpuTemperature);
+
+    service.Readings.Clear();
+    service.Readings.Add(CpuTemperatureReading("Core Temperatures", 0));
+    service.Readings.Add(CpuTemperatureReading("CPU (Tctl/Tdie)", double.NaN));
+    service.Readings.Add(CpuTemperatureReading("CPU (Tctl/Tdie)", 55));
+    service.UpdateCpuTemperature();
+
+    AssertEqual(55.0, service.Data.CpuTemperature);
+    AssertTrue(service.Data.SourceDetails["CpuTemperature"].Contains("secours"));
+
+    service.Readings.Clear();
+    service.UpdateCpuTemperature();
+    AssertEqual(0.0, service.Data.CpuTemperature);
+    AssertEqual(false, service.Data.SourceDetails.ContainsKey("CpuTemperature"));
+}
+
+static HwInfoService CreateCpuTemperatureService()
+{
+    var service = new HwInfoService();
+    service.Sensors[0] = new HwInfoSensorElement
+    {
+        SensorNameOrig = "CPU [#0]: AMD Ryzen 9 9900X: Enhanced"
+    };
+    return service;
+}
+
+static HwInfoReadingElement CpuTemperatureReading(string label, double value)
+{
+    return new HwInfoReadingElement
+    {
+        ReadingType = 1,
+        SensorIndex = 0,
+        LabelOrig = label,
+        Unit = "°C",
+        Value = value,
+        ValueAvg = 70,
+        ValueMin = 10,
+        ValueMax = 90
+    };
 }
 
 static void AssertEqual<T>(
